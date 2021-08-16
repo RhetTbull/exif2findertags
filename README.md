@@ -1,7 +1,5 @@
-I didn't realize how much exif data Spotlight already indexes. Given this I don't think this utlity is really needed.
-
-# exif2spotlight
-Read exif metadata from images with exiftool and write to MacOS Spotlight searchable extended attributes
+# exif2findertags
+Read exif metadata from images with exiftool and write to MacOS Finder tags
 
 # Usage
-exif2spotlight [--map/-m EXIF1,EXIF2... ATTR1,ATTR2] FILE1...
+exif2findertags [--verbose] [--exiftool-path EXIFTOOL_PATH] FILE1...
