@@ -46,7 +46,7 @@ def cli():
 
     if not args.exiftool_path:
         exiftool_path = get_exiftool_path()
-    verbose(f"exiftool path: {exiftool_path}")
+    verbose(f"exiftool path: {args.exiftool_path}")
 
     print(f"Processing {len(args.files)} files")
     for filename in args.files:
@@ -54,12 +54,12 @@ def cli():
         if file.is_dir():
             if args.walk:
                 verbose(f"Processing directory {file}")
-                process_directory(file, exiftool_path)
+                process_directory(file, args.exiftool_path)
             else:
                 verbose(f"Skipping directory {file}")
         else:
             verbose(f"Processing file {filename}")
-            process_file(filename, exiftool_path)
+            process_file(filename, args.exiftool_path)
 
 
 def process_directory(dir, exiftool_path):
