@@ -47,7 +47,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=[
-        "osxmetadata>=0.99.31",
+        "osxmetadata>=0.99.31", "click>=8.0"
     ],
     python_requires=">=3.8",
     entry_points={"console_scripts": ["exif2findertags=exif2findertags.cli:cli"]},
