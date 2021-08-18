@@ -35,7 +35,7 @@ def print_help_msg(command):
     multiple=True,
     help="Photo metadata tags to use as Finder tags; use only tag value as keyword",
 )
-@click.option("--walk", help="Recursively walk directories")
+@click.option("--walk", is_flag=True, help="Recursively walk directories")
 @click.option(
     "--exiftool-path",
     type=click.Path(exists=True),
