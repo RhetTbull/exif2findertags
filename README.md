@@ -2,6 +2,7 @@
 Read exif metadata from images with exiftool and write to MacOS Finder tags
 
 # Usage
+```
 Usage: exif2findertags [OPTIONS] [FILES]...
 
   CLI interface
@@ -14,3 +15,4 @@ Options:
   --walk TEXT           Recursively walk directories
   --exiftool-path PATH  Path to exiftool executable
   --help                Show this message and exit.
+```
