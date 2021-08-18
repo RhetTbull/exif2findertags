@@ -27,6 +27,7 @@ Options:
   --tag-value TEXT      Photo metadata tags to use as Finder tags; use only
                         tag value as keyword
   --walk TEXT           Recursively walk directories
-  --exiftool-path PATH  Path to exiftool executable
+  --exiftool-path PATH  Optional path to exiftool executable (will look in 
+                        $PATH if not specified)
   --help                Show this message and exit.
 ```

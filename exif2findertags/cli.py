@@ -40,7 +40,7 @@ def print_help_msg(command):
     "--exiftool-path",
     type=click.Path(exists=True),
     default=get_exiftool_path(),
-    help="Path to exiftool executable",
+    help="Optional path to exiftool executable (will look in $PATH if not specified)",
 )
 @click.argument("files", nargs=-1, type=click.Path(exists=True))
 def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
