@@ -14,6 +14,7 @@ Once you've installed `exif2findertags` with pipx, to upgrade to the latest vers
 
     pipx upgrade exif2findertags
 
+`exif2findertags` uses [exiftool](https://exiftool.org) to extract metadata from photos and videos so you'll need to install exiftool.  `exif2findertags` will look in the path for exiftool.  Alternatively, you can specify the path to exiftool using the `--exiftool-path` option.
 
 # Usage
 ```
