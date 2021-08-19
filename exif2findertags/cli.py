@@ -62,23 +62,27 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
     dirtext = (
         f' and {len(dirnames)} {"directory" if len(dirnames) == 1 else "directories"}'
     )
+    text = text + dirtext if walk else text
     if dirnames and not walk and not filenames:
         click.echo(
             f"Found 0 files{dirtext} but --walk was not specified, nothing to do"
         )
         print_help_msg(cli)
         sys.exit(1)
-    text = text + dirtext if walk else text
 
     if not VERBOSE:
         with yaspin(text=text):
-            process_files(files, tag, tag_value, exiftool_path, walk)
+            files_updated = process_files(files, tag, tag_value, exiftool_path, walk)
     else:
-        print(text)
-        process_files(files, tag, tag_value, exiftool_path, walk)
+        click.echo(text)
+        files_updated = process_files(files, tag, tag_value, exiftool_path, walk)
+
+    click.echo(
+        f"Done. Updated metadata for {files_updated} {'file' if files_updated == 1 else 'files'}."
+    )
 
 
-def process_files(files, tag, tag_value, exiftool_path, walk):
+def process_files(files, tag, tag_value, exiftool_path, walk) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
         tags=tag,
@@ -88,17 +92,19 @@ def process_files(files, tag, tag_value, exiftool_path, walk):
         verbose=verbose,
     )
 
+    files_processed = 0
     for filename in files:
         file = pathlib.Path(filename)
         if file.is_dir():
             if walk:
                 verbose(f"Processing directory {file}")
-                e2f.process_directory(file)
+                files_processed += e2f.process_directory(file)
             else:
                 verbose(f"Skipping directory {file}")
         else:
             verbose(f"Processing file {file}")
-            e2f.process_file(file)
+            files_processed += e2f.process_file(file)
+    return files_processed
 
 
 def main():
