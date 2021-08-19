@@ -35,7 +35,7 @@ Options:
   --help                Show this message and exit.
 ```
 
-You must specify one or more tag names using `-tag` or `--tag-value`.  Tag names must be valid names as specified in the exiftool [documentation](https://exiftool.org/TagNames/) and are case sensitive.  The group name may be omitted or included in same format as exfitool uses.
+You must specify one or more tag names using `-tag` or `--tag-value`.  Tag names must be valid names as specified in the exiftool [documentation](https://exiftool.org/TagNames/).  The group name may be omitted or included in same format as exfitool uses.
 
 For example:
 
