@@ -55,9 +55,21 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
 
     verbose(f"exiftool path: {exiftool_path}")
 
+    # create nice looking text for status
     filenames = [file for file in files if pathlib.Path(file).is_file()]
     dirnames = [file for file in files if pathlib.Path(file).is_dir()]
-    text = f'Processing {len(filenames)} {"file" if len(filenames) == 1 else "file"} and {len(dirnames)} {"directory" if len(dirnames) == 1 else "directories"}'
+    text = f'Processing {len(filenames)} {"file" if len(filenames) == 1 else "files"}'
+    dirtext = (
+        f' and {len(dirnames)} {"directory" if len(dirnames) == 1 else "directories"}'
+    )
+    if dirnames and not walk and not filenames:
+        click.echo(
+            f"Found 0 files{dirtext} but --walk was not specified, nothing to do"
+        )
+        print_help_msg(cli)
+        sys.exit(1)
+    text = text + dirtext if walk else text
+
     if not VERBOSE:
         with yaspin(text=text):
             process_files(files, tag, tag_value, exiftool_path, walk)
