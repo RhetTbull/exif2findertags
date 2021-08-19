@@ -7,10 +7,11 @@ import pathlib
 import sys
 
 import click
-import osxmetadata
+from yaspin import yaspin
 
 from ._version import __version__
-from .exiftool import ExifTool, get_exiftool_path
+from .exiftofinder import ExifToFinder
+from .exiftool import get_exiftool_path
 
 # if True, shows verbose output, controlled via --verbose flag
 VERBOSE = False
@@ -54,64 +55,38 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
 
     verbose(f"exiftool path: {exiftool_path}")
 
-    print(f"Processing {len(files)} files")
+    filenames = [file for file in files if pathlib.Path(file).is_file()]
+    dirnames = [file for file in files if pathlib.Path(file).is_dir()]
+    text = f'Processing {len(filenames)} {"file" if len(filenames) == 1 else "file"} and {len(dirnames)} {"directory" if len(dirnames) == 1 else "directories"}'
+    if not VERBOSE:
+        with yaspin(text=text):
+            process_files(files, tag, tag_value, exiftool_path, walk)
+    else:
+        print(text)
+        process_files(files, tag, tag_value, exiftool_path, walk)
+
+
+def process_files(files, tag, tag_value, exiftool_path, walk):
+    """Process files with ExifToFinder"""
+    e2f = ExifToFinder(
+        tags=tag,
+        tag_values=tag_value,
+        exiftool_path=exiftool_path,
+        walk=walk,
+        verbose=verbose,
+    )
+
     for filename in files:
         file = pathlib.Path(filename)
         if file.is_dir():
             if walk:
                 verbose(f"Processing directory {file}")
-                process_directory(file, tag, tag_value, exiftool_path)
+                e2f.process_directory(file)
             else:
                 verbose(f"Skipping directory {file}")
         else:
-            verbose(f"Processing file {filename}")
-            process_file(filename, tag, tag_value, exiftool_path)
-
-
-def process_directory(dir, tags, tag_values, exiftool_path):
-    """Process each directory applying exif metadata to extended attributes"""
-    for path_object in pathlib.Path(dir).glob("**/*"):
-        if path_object.is_file():
-            verbose(f"Processing file {path_object}")
-            process_file(path_object, tags, exiftool_path)
-        elif path_object.is_dir():
-            verbose(f"Processing directory {path_object}")
-            process_directory(path_object, tags, exiftool_path)
-
-
-def process_file(filename, tags, tag_values, exiftool_path):
-    """Process each filename applying exif metadata to extended attributes"""
-    exiftool = ExifTool(filename, exiftool=exiftool_path)
-    exifdict = exiftool.asdict(tag_groups=False)
-    exifdict.update(exiftool.asdict())
-
-    # ExifTool returns dict with tag group names (e.g. IPTC:Keywords)
-    # also add the tag names without group name
-    finder_tags = []
-    for tag, value in exifdict.items():
-        if tag in tags:
-            if isinstance(value, list):
-                finder_tags.extend([f"{tag}: {v}" for v in value])
-            else:
-                finder_tags.append(f"{tag}: {value}")
-        if tag in tag_values:
-            if isinstance(value, list):
-                finder_tags.extend([str(v) for v in value])
-            else:
-                finder_tags.append(str(value))
-
-    verbose(f"Writing Finder tags {finder_tags} to {filename}")
-    write_finder_tags(filename, finder_tags)
-
-
-def write_finder_tags(filename, finder_tags):
-    """Write Finder tags to file"""
-    md = osxmetadata.OSXMetaData(filename)
-    current_tags = list(md.tags)
-    tags = [osxmetadata.Tag(tag) for tag in finder_tags]
-    new_tags = [tag for tag in tags if tag not in current_tags]
-    if new_tags:
-        md.tags += new_tags
+            verbose(f"Processing file {file}")
+            e2f.process_file(file)
 
 
 def main():
