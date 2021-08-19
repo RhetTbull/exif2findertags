@@ -57,10 +57,14 @@ class ExifToFinder:
         for tag_value in self.tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
+                value = exifdict[tag_name]
                 if isinstance(value, list):
                     finder_tags.extend([str(v) for v in value])
                 else:
                     finder_tags.append(str(value))
+
+        # eliminate duplicates
+        finder_tags = list(set(finder_tags))
 
         if finder_tags:
             self.verbose(f"Writing Finder tags {finder_tags} to {filename}")
