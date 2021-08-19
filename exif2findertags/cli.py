@@ -28,24 +28,62 @@ def print_help_msg(command):
         click.echo(command.get_help(ctx))
 
 
-@click.command()
-@click.option("--verbose", "-V", "verbose_", is_flag=True, help="Show verbose output")
-@click.option("--tag", multiple=True, help="Photo metadata tags to use as Finder tags")
+class EXIFToFinderCommand(click.Command):
+    """Custom click.Command that overrides get_help() to show additional help info for export"""
+
+    def get_help(self, ctx):
+        help_text = super().get_help(ctx)
+        formatter = click.HelpFormatter()
+
+        formatter.write("\n\n")
+        formatter.write_text(
+            "Tag names used with --tag and --tag-value may be any tag that exiftool can read. "
+            + "For a complete list of tag values, see https://exiftool.org/TagNames/. "
+            + "Tag names may be specified with or without the tag group name.  For example: "
+            + "`--tag Keywords` and `--tag IPTC:Keywords` are both valid. "
+            + "If specified, the group name will be output to the name of the Finder tag when used with --tag. "
+            + "For example, `--tag IPTC:Keywords` will result in a Finder tag named `IPTC:Keywords: Travel` if `Travel` was one of the keywords "
+            + "and `--tag Keywords` would result in a Finder tag of `Keywords: Travel`. "
+            + "To use only the tag value as the keyword, use `--tag-value Keywords`, which would result in a Finder tag named `Travel`."
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            "When used with --tag, Finder tags will be created in format `TagName: TagValue`. "
+            + "For example, `--tag ISO` would produce something like `ISO: 100`. "
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            "exiftool must be installed as it is used to read the metadata from media files. "
+            + "See https://exiftool.org/ to download and install exiftool."
+        )
+        help_text += formatter.getvalue()
+        return help_text
+
+
+@click.command(cls=EXIFToFinderCommand)
+@click.option("--verbose", "-V", "verbose_", is_flag=True, help="Show verbose output.")
+@click.option(
+    "--tag",
+    multiple=True,
+    help="Photo metadata tags to use as Finder tags; "
+    + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`.",
+)
 @click.option(
     "--tag-value",
     multiple=True,
-    help="Photo metadata tags to use as Finder tags; use only tag value as keyword",
+    help="Photo metadata tags to use as Finder tags; use only tag value as keyword; "
+    + "multiple tags may be specified by repeating --tag-value, for example: `--tag-value Keywords --tag-value PersonInImage`.",
 )
-@click.option("--walk", is_flag=True, help="Recursively walk directories")
+@click.option("--walk", is_flag=True, help="Recursively walk directories.")
 @click.option(
     "--exiftool-path",
     type=click.Path(exists=True),
     default=get_exiftool_path(),
-    help="Optional path to exiftool executable (will look in $PATH if not specified)",
+    help="Optional path to exiftool executable (will look in $PATH if not specified).",
 )
 @click.argument("files", nargs=-1, type=click.Path(exists=True))
 def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
-    """CLI interface"""
+    """Create Finder tags from EXIF and other metadata in media files."""
     global VERBOSE
     VERBOSE = verbose_
 
