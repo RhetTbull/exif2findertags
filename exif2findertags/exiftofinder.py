@@ -45,22 +45,27 @@ class ExifToFinder:
 
         # ExifTool returns dict with tag group names (e.g. IPTC:Keywords)
         # also add the tag names without group name
+
+        # "(Binary data " below is hack workaround for "(Binary data 0 bytes, use -b option to extract)" error that happens
+        # when exporting video with keywords on Photos 5.0 / Catalina
         finder_tags = []
         for tag in self.tags:
             tag_name = exifdict_lc.get(tag.lower())
             if tag_name:
                 value = exifdict[tag_name]
                 if isinstance(value, list):
+                    value = [v for v in value if not str(v).startswith("(Binary data ")]
                     finder_tags.extend([f"{tag_name}: {v}" for v in value])
-                else:
+                elif not str(value).startswith("(Binary data "):
                     finder_tags.append(f"{tag_name}: {value}")
         for tag_value in self.tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
                 value = exifdict[tag_name]
                 if isinstance(value, list):
+                    value = [v for v in value if not str(v).startswith("(Binary data ")]
                     finder_tags.extend([str(v) for v in value])
-                else:
+                elif not str(value).startswith("(Binary data "):
                     finder_tags.append(str(value))
 
         # eliminate duplicates
