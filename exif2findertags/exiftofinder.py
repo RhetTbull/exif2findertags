@@ -15,12 +15,36 @@ def noop():
 class ExifToFinder:
     """Read EXIF and other photo/video metadata with exiftool and write to Finder tags"""
 
-    def __init__(self, tags, tag_values, exiftool_path, walk, verbose=None) -> None:
+    def __init__(
+        self,
+        tags,
+        tag_values,
+        exiftool_path,
+        walk,
+        verbose=None,
+        all_tags=False,
+        group=False,
+        value=False,
+    ) -> None:
+        """Args:
+        tags: list of tags to read from EXIF
+        tag_values: list of tag values to read from EXIF (don't include tag names in Finder tags)
+        exiftool_path: path to exiftool executable
+        walk: whether to walk directories recursively
+        verbose: whether to print verbose output
+        all_tags: whether to use all tags found in file
+        group: whether to use tag groups as Finder tag names (e.g. IPTC:Keywords instead of Keywords) when used with all_tags
+        value: whether to use tag values as Finder tag names when used with all_tags
+        """
         self.tags = tags
         self.tag_values = tag_values
         self.exiftool_path = exiftool_path or get_exiftool_path()
         self.walk = walk
         self.verbose = verbose or noop
+        self.all_tags = all_tags
+        self.group = group
+        self.value = value
+
         if not callable(verbose):
             raise ValueError("verbose must be callable")
 
@@ -39,8 +63,10 @@ class ExifToFinder:
     def process_file(self, filename):
         """Process each filename applying exif metadata to extended attributes"""
         exiftool = ExifTool(filename, exiftool=self.exiftool_path)
-        exifdict = exiftool.asdict(tag_groups=False)
-        exifdict.update(exiftool.asdict())
+        exifdict_no_groups = exiftool.asdict(tag_groups=False)
+        exifdict_groups = exiftool.asdict()
+        exifdict = exifdict_no_groups.copy()
+        exifdict.update(exifdict_groups)
         exifdict_lc = {k.lower(): k for k in exifdict}
 
         # ExifTool returns dict with tag group names (e.g. IPTC:Keywords)
@@ -68,6 +94,40 @@ class ExifToFinder:
                 elif not str(value).startswith("(Binary data "):
                     finder_tags.append(str(value))
 
+        if self.all_tags:
+            # process all tags
+            for tag in exifdict_groups:
+                if tag == "SourceFile":
+                    continue
+                group, tag_name = tag.split(":", 1)
+                if group in ["File", "ExifTool"]:
+                    continue
+                value = exifdict_groups[tag]
+                if self.group:
+                    if isinstance(value, list):
+                        value = [
+                            v for v in value if not str(v).startswith("(Binary data ")
+                        ]
+                        finder_tags.extend([f"{tag}: {v}" for v in value])
+                    elif not str(value).startswith("(Binary data "):
+                        finder_tags.append(f"{tag}: {value}")
+                elif self.value:
+                    if isinstance(value, list):
+                        value = [
+                            v for v in value if not str(v).startswith("(Binary data ")
+                        ]
+                        finder_tags.extend([str(v) for v in value])
+                    elif not str(value).startswith("(Binary data "):
+                        finder_tags.append(str(value))
+                else:
+                    if isinstance(value, list):
+                        value = [
+                            v for v in value if not str(v).startswith("(Binary data ")
+                        ]
+                        finder_tags.extend([f"{tag_name}: {v}" for v in value])
+                    elif not str(value).startswith("(Binary data "):
+                        finder_tags.append(f"{tag_name}: {value}")
+
         # eliminate duplicates
         finder_tags = list(set(finder_tags))
 
@@ -84,6 +144,6 @@ class ExifToFinder:
         md = osxmetadata.OSXMetaData(filename)
         current_tags = list(md.tags)
         tags = [osxmetadata.Tag(tag) for tag in finder_tags]
-        new_tags = [tag for tag in tags if tag not in current_tags]
+        new_tags = current_tags + [tag for tag in tags if tag not in current_tags]
         if new_tags:
-            md.tags += new_tags
+            md.tags = new_tags

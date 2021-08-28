@@ -7,6 +7,18 @@ import pathlib
 import sys
 
 import click
+from cloup import (
+    Command,
+    Context,
+    HelpFormatter,
+    HelpTheme,
+    Style,
+    argument,
+    command,
+    option,
+    option_group,
+)
+from cloup.constraints import RequireAtLeast, mutually_exclusive
 from yaspin import yaspin
 
 from ._version import __version__
@@ -24,16 +36,16 @@ def verbose(message_str, **kwargs):
 
 
 def print_help_msg(command):
-    with click.Context(command) as ctx:
+    with Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
 
-class EXIFToFinderCommand(click.Command):
-    """Custom click.Command that overrides get_help() to show additional help info for export"""
+class EXIFToFinderCommand(Command):
+    """Custom cloup.command that overrides get_help() to show additional help info for export"""
 
     def get_help(self, ctx):
         help_text = super().get_help(ctx)
-        formatter = click.HelpFormatter()
+        formatter = HelpFormatter()
 
         formatter.write("\n\n")
         formatter.write_text(
@@ -60,34 +72,71 @@ class EXIFToFinderCommand(click.Command):
         return help_text
 
 
-@click.command(cls=EXIFToFinderCommand)
-@click.option("--verbose", "-V", "verbose_", is_flag=True, help="Show verbose output.")
-@click.option(
-    "--tag",
-    multiple=True,
-    help="Photo metadata tags to use as Finder tags; "
-    + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`.",
+formatter_settings = HelpFormatter.settings(
+    theme=HelpTheme(
+        invoked_command=Style(fg="bright_yellow"),
+        heading=Style(fg="bright_white", bold=True),
+        constraint=Style(fg="magenta"),
+        col1=Style(fg="bright_yellow"),
+    )
 )
-@click.option(
-    "--tag-value",
-    multiple=True,
-    help="Photo metadata tags to use as Finder tags; use only tag value as keyword; "
-    + "multiple tags may be specified by repeating --tag-value, for example: `--tag-value Keywords --tag-value PersonInImage`.",
+
+
+@command(cls=EXIFToFinderCommand, formatter_settings=formatter_settings)
+@option_group(
+    "Specify which metadata tags to export to Finder tags",
+    option(
+        "--tag",
+        multiple=True,
+        help="Photo metadata tags to use as Finder tags; "
+        + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`.",
+    ),
+    option(
+        "--tag-value",
+        multiple=True,
+        help="Photo metadata tags to use as Finder tags; use only tag value as keyword; "
+        + "multiple tags may be specified by repeating --tag-value, for example: `--tag-value Keywords --tag-value PersonInImage`.",
+    ),
+    option(
+        "--all-tags",
+        is_flag=True,
+        help="Include all metadata found in file as Finder tags.  See also, --group, --value.",
+    ),
+    constraint=RequireAtLeast(1),
 )
-@click.option("--walk", is_flag=True, help="Recursively walk directories.")
-@click.option(
-    "--exiftool-path",
-    type=click.Path(exists=True),
-    default=get_exiftool_path(),
-    help="Optional path to exiftool executable (will look in $PATH if not specified).",
+@option_group(
+    "Options for use with --all-tags",
+    option(
+        "--group",
+        "-G",
+        is_flag=True,
+        help="Include tag group in Finder tag (for example, 'EXIF:Make' instead of 'Make') when used with --all-tags.",
+    ),
+    option(
+        "--value",
+        is_flag=True,
+        help="Use only tag value (not tag name) as Finder tag when used with --all-tags.",
+    ),
+    constraint=mutually_exclusive,
 )
-@click.argument("files", nargs=-1, type=click.Path(exists=True))
-def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
+@option_group(
+    "Settings",
+    option("--verbose", "-V", "verbose_", is_flag=True, help="Show verbose output."),
+    option("--walk", is_flag=True, help="Recursively walk directories."),
+    option(
+        "--exiftool-path",
+        type=click.Path(exists=True),
+        default=get_exiftool_path(),
+        help="Optional path to exiftool executable (will look in $PATH if not specified).",
+    ),
+)
+@argument("files", nargs=-1, type=click.Path(exists=True))
+def cli(verbose_, tag, tag_value, walk, exiftool_path, files, all_tags, group, value):
     """Create Finder tags from EXIF and other metadata in media files."""
     global VERBOSE
     VERBOSE = verbose_
 
-    if not files or not (tag or tag_value):
+    if not files:
         print_help_msg(cli)
         sys.exit(1)
 
@@ -110,17 +159,23 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files):
 
     if not VERBOSE:
         with yaspin(text=text):
-            files_updated = process_files(files, tag, tag_value, exiftool_path, walk)
+            files_updated = process_files(
+                files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+            )
     else:
         click.echo(text)
-        files_updated = process_files(files, tag, tag_value, exiftool_path, walk)
+        files_updated = process_files(
+            files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+        )
 
     click.echo(
         f"Done. Updated metadata for {files_updated} {'file' if files_updated == 1 else 'files'}."
     )
 
 
-def process_files(files, tag, tag_value, exiftool_path, walk) -> int:
+def process_files(
+    files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
         tags=tag,
@@ -128,6 +183,9 @@ def process_files(files, tag, tag_value, exiftool_path, walk) -> int:
         exiftool_path=exiftool_path,
         walk=walk,
         verbose=verbose,
+        all_tags=all_tags,
+        group=group,
+        value=value,
     )
 
     files_processed = 0

@@ -75,7 +75,7 @@ For example:
 
 This is a new project under active development. Features in work:
 
-- [ ] --all-tags to output all tags without having to specify them
+- [x] --all-tags to output all tags without having to specify them
 - [ ] --tag-group GROUP to output all tags in a certain group, e.g. --tag-group EXIF
 - [ ] Ability to also set the Finder comment field based on tag values, (for example, image description)
 - [ ] Ability to use a config file to specify which tags to export
