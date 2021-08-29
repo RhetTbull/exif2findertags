@@ -17,14 +17,15 @@ class ExifToFinder:
 
     def __init__(
         self,
-        tags,
-        tag_values,
-        exiftool_path,
-        walk,
+        tags=None,
+        tag_values=None,
+        exiftool_path=None,
+        walk=False,
         verbose=None,
         all_tags=False,
         group=False,
         value=False,
+        tag_groups=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -35,6 +36,7 @@ class ExifToFinder:
         all_tags: whether to use all tags found in file
         group: whether to use tag groups as Finder tag names (e.g. IPTC:Keywords instead of Keywords) when used with all_tags
         value: whether to use tag values as Finder tag names when used with all_tags
+        tag_groups: list of tag groups to use as Finder tag names (e.g. IPTC or EXIF)
         """
         self.tags = tags
         self.tag_values = tag_values
@@ -44,6 +46,9 @@ class ExifToFinder:
         self.all_tags = all_tags
         self.group = group
         self.value = value
+        self.tag_groups = tag_groups
+        if self.tag_groups:
+            self.tag_groups = [tag.lower() for tag in self.tag_groups]
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -74,6 +79,9 @@ class ExifToFinder:
 
         # "(Binary data " below is hack workaround for "(Binary data 0 bytes, use -b option to extract)" error that happens
         # when exporting video with keywords on Photos 5.0 / Catalina
+
+        # TODO: refactor out the duplicate code
+
         finder_tags = []
         for tag in self.tags:
             tag_name = exifdict_lc.get(tag.lower())
@@ -94,8 +102,8 @@ class ExifToFinder:
                 elif not str(value).startswith("(Binary data "):
                     finder_tags.append(str(value))
 
-        if self.all_tags:
-            # process all tags
+        if self.all_tags or self.tag_groups:
+            # process all tags or specific tag groups
             for tag in exifdict_groups:
                 if tag == "SourceFile":
                     continue
@@ -103,6 +111,8 @@ class ExifToFinder:
                 if group in ["File", "ExifTool"]:
                     continue
                 value = exifdict_groups[tag]
+                if self.tag_groups and group.lower() not in self.tag_groups:
+                    continue
                 if self.group:
                     if isinstance(value, list):
                         value = [
@@ -127,6 +137,7 @@ class ExifToFinder:
                         finder_tags.extend([f"{tag_name}: {v}" for v in value])
                     elif not str(value).startswith("(Binary data "):
                         finder_tags.append(f"{tag_name}: {value}")
+
 
         # eliminate duplicates
         finder_tags = list(set(finder_tags))

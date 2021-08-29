@@ -87,12 +87,14 @@ formatter_settings = HelpFormatter.settings(
     "Specify which metadata tags to export to Finder tags",
     option(
         "--tag",
+        metavar="TAG",
         multiple=True,
         help="Photo metadata tags to use as Finder tags; "
         + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`.",
     ),
     option(
         "--tag-value",
+        metavar="TAG",
         multiple=True,
         help="Photo metadata tags to use as Finder tags; use only tag value as keyword; "
         + "multiple tags may be specified by repeating --tag-value, for example: `--tag-value Keywords --tag-value PersonInImage`.",
@@ -100,12 +102,18 @@ formatter_settings = HelpFormatter.settings(
     option(
         "--all-tags",
         is_flag=True,
-        help="Include all metadata found in file as Finder tags.  See also, --group, --value.",
+        help="Include all metadata found in file as Finder tags; see also, --group, --value.",
+    ),
+    option(
+        "--tag-group",
+        multiple=True,
+        metavar="GROUP",
+        help="Include all metadata from GROUP tag group, e.g. '--tag-group EXIF', '--tag-group XMP'; see also, --group, --value.",
     ),
     constraint=RequireAtLeast(1),
 )
 @option_group(
-    "Options for use with --all-tags",
+    "Options for use with --all-tags or --tag-group",
     option(
         "--group",
         "-G",
@@ -131,7 +139,18 @@ formatter_settings = HelpFormatter.settings(
     ),
 )
 @argument("files", nargs=-1, type=click.Path(exists=True))
-def cli(verbose_, tag, tag_value, walk, exiftool_path, files, all_tags, group, value):
+def cli(
+    verbose_,
+    tag,
+    tag_value,
+    walk,
+    exiftool_path,
+    files,
+    all_tags,
+    group,
+    value,
+    tag_group,
+):
     """Create Finder tags from EXIF and other metadata in media files."""
     global VERBOSE
     VERBOSE = verbose_
@@ -160,12 +179,28 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files, all_tags, group, v
     if not VERBOSE:
         with yaspin(text=text):
             files_updated = process_files(
-                files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+                files,
+                tag,
+                tag_value,
+                exiftool_path,
+                walk,
+                all_tags,
+                group,
+                value,
+                tag_group,
             )
     else:
         click.echo(text)
         files_updated = process_files(
-            files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+            files,
+            tag,
+            tag_value,
+            exiftool_path,
+            walk,
+            all_tags,
+            group,
+            value,
+            tag_group,
         )
 
     click.echo(
@@ -174,7 +209,7 @@ def cli(verbose_, tag, tag_value, walk, exiftool_path, files, all_tags, group, v
 
 
 def process_files(
-    files, tag, tag_value, exiftool_path, walk, all_tags, group, value
+    files, tag, tag_value, exiftool_path, walk, all_tags, group, value, tag_group
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -186,6 +221,7 @@ def process_files(
         all_tags=all_tags,
         group=group,
         value=value,
+        tag_groups=tag_group,
     )
 
     files_processed = 0
