@@ -26,6 +26,7 @@ class ExifToFinder:
         group=False,
         value=False,
         tag_groups=None,
+        match=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -37,6 +38,7 @@ class ExifToFinder:
         group: whether to use tag groups as Finder tag names (e.g. IPTC:Keywords instead of Keywords) when used with all_tags
         value: whether to use tag values as Finder tag names when used with all_tags
         tag_groups: list of tag groups to use as Finder tag names (e.g. IPTC or EXIF)
+        match: a case sensitive pattern to match against tag names
         """
         self.tags = tags
         self.tag_values = tag_values
@@ -49,6 +51,7 @@ class ExifToFinder:
         self.tag_groups = tag_groups
         if self.tag_groups:
             self.tag_groups = [tag.lower() for tag in self.tag_groups]
+        self.match = match
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -102,7 +105,7 @@ class ExifToFinder:
                 elif not str(value).startswith("(Binary data "):
                     finder_tags.append(str(value))
 
-        if self.all_tags or self.tag_groups:
+        if self.all_tags or self.tag_groups or self.match:
             # process all tags or specific tag groups
             for tag in exifdict_groups:
                 if tag == "SourceFile":
@@ -111,8 +114,13 @@ class ExifToFinder:
                 if group in ["File", "ExifTool"]:
                     continue
                 value = exifdict_groups[tag]
+
                 if self.tag_groups and group.lower() not in self.tag_groups:
                     continue
+
+                if self.match and all(m not in tag_name for m in self.match):
+                    continue
+
                 if self.group:
                     if isinstance(value, list):
                         value = [
@@ -129,15 +137,11 @@ class ExifToFinder:
                         finder_tags.extend([str(v) for v in value])
                     elif not str(value).startswith("(Binary data "):
                         finder_tags.append(str(value))
-                else:
-                    if isinstance(value, list):
-                        value = [
-                            v for v in value if not str(v).startswith("(Binary data ")
-                        ]
-                        finder_tags.extend([f"{tag_name}: {v}" for v in value])
-                    elif not str(value).startswith("(Binary data "):
-                        finder_tags.append(f"{tag_name}: {value}")
-
+                elif isinstance(value, list):
+                    value = [v for v in value if not str(v).startswith("(Binary data ")]
+                    finder_tags.extend([f"{tag_name}: {v}" for v in value])
+                elif not str(value).startswith("(Binary data "):
+                    finder_tags.append(f"{tag_name}: {value}")
 
         # eliminate duplicates
         finder_tags = list(set(finder_tags))

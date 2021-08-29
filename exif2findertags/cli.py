@@ -110,10 +110,18 @@ formatter_settings = HelpFormatter.settings(
         metavar="GROUP",
         help="Include all metadata from GROUP tag group, e.g. '--tag-group EXIF', '--tag-group XMP'; see also, --group, --value.",
     ),
+    option(
+        "--match",
+        multiple=True,
+        metavar="PATTERN",
+        help="Include all metadata tags whose tag name matches PATTERN, e.g. '--match Exposure'; see also, --group, --value. "
+        + "PATTERN is case-sensitive, e.g. '--match Exposure' matches EXIF:ExposureTime, EXIF:ExposureMode, etc. but '--match exposure' would not; "
+        + "see also, --group, --value",
+    ),
     constraint=RequireAtLeast(1),
 )
 @option_group(
-    "Options for use with --all-tags or --tag-group",
+    "Options for use with --all-tags, --tag-group, --match",
     option(
         "--group",
         "-G",
@@ -150,6 +158,7 @@ def cli(
     group,
     value,
     tag_group,
+    match,
 ):
     """Create Finder tags from EXIF and other metadata in media files."""
     global VERBOSE
@@ -188,6 +197,7 @@ def cli(
                 group,
                 value,
                 tag_group,
+                match,
             )
     else:
         click.echo(text)
@@ -201,6 +211,7 @@ def cli(
             group,
             value,
             tag_group,
+            match,
         )
 
     click.echo(
@@ -209,7 +220,16 @@ def cli(
 
 
 def process_files(
-    files, tag, tag_value, exiftool_path, walk, all_tags, group, value, tag_group
+    files,
+    tag,
+    tag_value,
+    exiftool_path,
+    walk,
+    all_tags,
+    group,
+    value,
+    tag_group,
+    match,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -222,6 +242,7 @@ def process_files(
         group=group,
         value=value,
         tag_groups=tag_group,
+        match=match,
     )
 
     files_processed = 0

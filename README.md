@@ -20,7 +20,7 @@ Once you've installed `exif2findertags` with pipx, to upgrade to the latest vers
 # Usage
 ```
 exif2findertags
-Usage: python -m exif2findertags [OPTIONS] [FILES]...
+Usage: exif2findertags [OPTIONS] [FILES]...
 
   Create Finder tags from EXIF and other metadata in media files.
 
@@ -37,8 +37,14 @@ Specify which metadata tags to export to Finder tags: [at least 1 required]
   --tag-group GROUP     Include all metadata from GROUP tag group, e.g. '--tag-
                         group EXIF', '--tag-group XMP'; see also, --group,
                         --value.
+  --match PATTERN       Include all metadata tags whose tag name matches
+                        PATTERN, e.g. '--match Exposure'; see also, --group,
+                        --value. PATTERN is case-sensitive, e.g. '--match
+                        Exposure' matches EXIF:ExposureTime, EXIF:ExposureMode,
+                        etc. but '--match exposure' would not; see also,
+                        --group, --value
 
-Options for use with --all-tags or --tag-group: [mutually exclusive]
+Options for use with --all-tags, --tag-group, --match: [mutually exclusive]
   -G, --group           Include tag group in Finder tag (for example,
                         'EXIF:Make' instead of 'Make') when used with --all-
                         tags.
