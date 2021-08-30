@@ -121,6 +121,7 @@ This is a new project under active development. Features in work:
 - [X] Tests
 - [ ] --overwrite-tags to overwrite existing Finder tags
 - [ ] --overwrite-fc to overwrite existing Finder comments 
+- [ ] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 
 # Contributing
 
