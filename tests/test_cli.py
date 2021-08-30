@@ -262,3 +262,46 @@ def test_exiftool_path(tmp_image, exiftool_path):
 
     # reset tags for next test
     md.tags = []
+
+
+def test_fc_tag(tmp_image):
+    """test --fc-tag"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--fc-tag", "Make", "--fc-tag", "ISO", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Make: Apple\nISO: 20"
+
+    # reset findercomment for next test
+    md.findercomment = None
+
+
+def test_fc_tag_value(tmp_image):
+    """test --fc-tag-value"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--fc-tag-value",
+            "Make",
+            "--fc-tag-value",
+            "ISO",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Apple\n20"
+
+    # reset findercomment for next test
+    md.findercomment = None

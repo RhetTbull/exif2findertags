@@ -84,7 +84,7 @@ formatter_settings = HelpFormatter.settings(
 
 @command(cls=EXIFToFinderCommand, formatter_settings=formatter_settings)
 @option_group(
-    "Specify which metadata tags to export to Finder tags",
+    "Specify which metadata tags to export to Finder tags and/or comments",
     option(
         "--tag",
         metavar="TAG",
@@ -121,10 +121,6 @@ formatter_settings = HelpFormatter.settings(
         + "PATTERN is case-sensitive, e.g. '--tag-match Exposure' matches EXIF:ExposureTime, EXIF:ExposureMode, etc. but '--tag-match exposure' would not; "
         + "see also, --group, --value",
     ),
-    constraint=RequireAtLeast(1),
-)
-@option_group(
-    "Specify which metadata tags to export to Finder comments",
     option(
         "--fc-tag",
         metavar="TAG",
@@ -143,9 +139,10 @@ formatter_settings = HelpFormatter.settings(
         + "multiple tags may be specified by repeating --fc-tag-value, for example: `--fc-tag-value Keywords --fc-tag-value PersonInImage`."
         + "Tag values will be appended to Finder comment.",
     ),
+    constraint=RequireAtLeast(1),
 )
 @option_group(
-    "Options for use with --all-tags, --tag-group, --match",
+    "Options for use with --all-tags, --tag-group, --tag-match",
     option(
         "--group",
         "-G",
@@ -186,7 +183,7 @@ def cli(
     fc_tag,
     fc_tag_value,
 ):
-    """Create Finder tags from EXIF and other metadata in media files."""
+    """Create Finder tags and/or Finder comments from EXIF and other metadata in media files."""
     global VERBOSE
     VERBOSE = verbose_
 
@@ -224,6 +221,8 @@ def cli(
                 value,
                 tag_group,
                 tag_match,
+                fc_tag,
+                fc_tag_value,
             )
     else:
         click.echo(text)
@@ -238,6 +237,8 @@ def cli(
             value,
             tag_group,
             tag_match,
+            fc_tag,
+            fc_tag_value,
         )
 
     click.echo(
@@ -256,6 +257,8 @@ def process_files(
     value,
     tag_group,
     tag_match,
+    fc_tag,
+    fc_tag_value,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -269,6 +272,8 @@ def process_files(
         value=value,
         tag_groups=tag_group,
         tag_match=tag_match,
+        fc_tags=fc_tag,
+        fc_tag_values=fc_tag_value,
     )
 
     files_processed = 0

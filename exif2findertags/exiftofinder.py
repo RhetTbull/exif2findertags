@@ -27,6 +27,8 @@ class ExifToFinder:
         value=False,
         tag_groups=None,
         tag_match=None,
+        fc_tags=None,
+        fc_tag_values=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -38,7 +40,9 @@ class ExifToFinder:
         group: whether to use tag groups as Finder tag names (e.g. IPTC:Keywords instead of Keywords) when used with all_tags
         value: whether to use tag values as Finder tag names when used with all_tags
         tag_groups: list of tag groups to use as Finder tag names (e.g. IPTC or EXIF)
-        match: a case sensitive pattern to match against tag names
+        tag_match: a case sensitive pattern to match against tag names
+        fc_tags: list of tags to write to Finder comments
+        fc_tag_values: list of tag values to write to Finder comments
         """
         self.tags = tags
         self.tag_values = tag_values
@@ -52,6 +56,8 @@ class ExifToFinder:
         if self.tag_groups:
             self.tag_groups = [tag.lower() for tag in self.tag_groups]
         self.tag_match = tag_match
+        self.fc_tags = fc_tags
+        self.fc_tag_values = fc_tag_values
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -145,14 +151,41 @@ class ExifToFinder:
 
         # eliminate duplicates
         finder_tags = list(set(finder_tags))
-
+        file_count = 0
         if finder_tags:
             self.verbose(f"Writing Finder tags {finder_tags} to {filename}")
             self.write_finder_tags(filename, finder_tags)
-            return 1
+            file_count = 1
         else:
             self.verbose(f"No Finder tags to write to {filename}")
-            return 0
+
+        finder_comment = []
+        for tag in self.fc_tags:
+            tag_name = exifdict_lc.get(tag.lower())
+            if tag_name:
+                value = exifdict[tag_name]
+                if isinstance(value, list):
+                    value = [v for v in value if not str(v).startswith("(Binary data ")]
+                    finder_comment.extend([f"{tag_name}: {v}" for v in value])
+                elif not str(value).startswith("(Binary data "):
+                    finder_comment.append(f"{tag_name}: {value}")
+        for tag_value in self.fc_tag_values:
+            tag_name = exifdict_lc.get(tag_value.lower())
+            if tag_name:
+                value = exifdict[tag_name]
+                if isinstance(value, list):
+                    value = [v for v in value if not str(v).startswith("(Binary data ")]
+                    finder_comment.extend([str(v) for v in value])
+                elif not str(value).startswith("(Binary data "):
+                    finder_comment.append(str(value))
+
+        comment = "\n".join(finder_comment)
+        if comment:
+            self.verbose(f"Writing Finder comment {comment} to {filename}")
+            self.write_finder_comment(filename, comment)
+            file_count = 1
+
+        return file_count
 
     def write_finder_tags(self, filename, finder_tags):
         """Write Finder tags to file"""
@@ -162,3 +195,9 @@ class ExifToFinder:
         new_tags = current_tags + [tag for tag in tags if tag not in current_tags]
         if new_tags:
             md.tags = new_tags
+
+    def write_finder_comment(self, filename, comment):
+        """Write Finder comment to file"""
+        md = osxmetadata.OSXMetaData(filename)
+        fc = md.findercomment
+        md.findercomment = fc + "\n" + comment if fc else comment
