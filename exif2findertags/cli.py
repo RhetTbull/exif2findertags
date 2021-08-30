@@ -136,7 +136,7 @@ formatter_settings = HelpFormatter.settings(
         metavar="TAG",
         multiple=True,
         help="Photo metadata tags to use as Finder comments; use only tag value as comment; "
-        + "multiple tags may be specified by repeating --fc-tag-value, for example: `--fc-tag-value Keywords --fc-tag-value PersonInImage`."
+        + "multiple tags may be specified by repeating --fc-tag-value, for example: `--fc-tag-value Keywords --fc-tag-value PersonInImage`. "
         + "Tag values will be appended to Finder comment.",
     ),
     constraint=RequireAtLeast(1),
