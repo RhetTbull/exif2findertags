@@ -26,7 +26,7 @@ class ExifToFinder:
         group=False,
         value=False,
         tag_groups=None,
-        match=None,
+        tag_match=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -51,7 +51,7 @@ class ExifToFinder:
         self.tag_groups = tag_groups
         if self.tag_groups:
             self.tag_groups = [tag.lower() for tag in self.tag_groups]
-        self.match = match
+        self.tag_match = tag_match
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -105,7 +105,7 @@ class ExifToFinder:
                 elif not str(value).startswith("(Binary data "):
                     finder_tags.append(str(value))
 
-        if self.all_tags or self.tag_groups or self.match:
+        if self.all_tags or self.tag_groups or self.tag_match:
             # process all tags or specific tag groups
             for tag in exifdict_groups:
                 if tag == "SourceFile":
@@ -118,7 +118,7 @@ class ExifToFinder:
                 if self.tag_groups and group.lower() not in self.tag_groups:
                     continue
 
-                if self.match and all(m not in tag_name for m in self.match):
+                if self.tag_match and all(m not in tag_name for m in self.tag_match):
                     continue
 
                 if self.group:

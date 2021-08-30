@@ -90,7 +90,10 @@ formatter_settings = HelpFormatter.settings(
         metavar="TAG",
         multiple=True,
         help="Photo metadata tags to use as Finder tags; "
-        + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`.",
+        + "multiple tags may be specified by repeating --tag, for example: `--tag Keywords --tag ISO`. "
+        + "Finder tags will be in form 'TAG: VALUE', e.g. 'ISO: 80' or 'IPTC:Keywords: Travel'. "
+        + "If the group name is specified it will be included in the Finder tag name, otherwise, "
+        + "just the tag name will be included. ",
     ),
     option(
         "--tag-value",
@@ -111,14 +114,35 @@ formatter_settings = HelpFormatter.settings(
         help="Include all metadata from GROUP tag group, e.g. '--tag-group EXIF', '--tag-group XMP'; see also, --group, --value.",
     ),
     option(
-        "--match",
+        "--tag-match",
         multiple=True,
         metavar="PATTERN",
-        help="Include all metadata tags whose tag name matches PATTERN, e.g. '--match Exposure'; see also, --group, --value. "
-        + "PATTERN is case-sensitive, e.g. '--match Exposure' matches EXIF:ExposureTime, EXIF:ExposureMode, etc. but '--match exposure' would not; "
+        help="Include all metadata tags whose tag name matches PATTERN, e.g. '--tag-match Exposure'; see also, --group, --value. "
+        + "PATTERN is case-sensitive, e.g. '--tag-match Exposure' matches EXIF:ExposureTime, EXIF:ExposureMode, etc. but '--tag-match exposure' would not; "
         + "see also, --group, --value",
     ),
     constraint=RequireAtLeast(1),
+)
+@option_group(
+    "Specify which metadata tags to export to Finder comments",
+    option(
+        "--fc-tag",
+        metavar="TAG",
+        multiple=True,
+        help="Photo metadata tags to use as Finder comments; "
+        + "multiple tags may be specified by repeating --fc-tag, for example: `--fc-tag Keywords --fc-tag ISO`. "
+        + "Tags will be appended to Finder comment. "
+        + "If the group name is specified it will be included in the Finder comment, otherwise, "
+        + "just the tag name will be included.",
+    ),
+    option(
+        "--fc-tag-value",
+        metavar="TAG",
+        multiple=True,
+        help="Photo metadata tags to use as Finder comments; use only tag value as comment; "
+        + "multiple tags may be specified by repeating --fc-tag-value, for example: `--fc-tag-value Keywords --fc-tag-value PersonInImage`."
+        + "Tag values will be appended to Finder comment.",
+    ),
 )
 @option_group(
     "Options for use with --all-tags, --tag-group, --match",
@@ -158,7 +182,9 @@ def cli(
     group,
     value,
     tag_group,
-    match,
+    tag_match,
+    fc_tag,
+    fc_tag_value,
 ):
     """Create Finder tags from EXIF and other metadata in media files."""
     global VERBOSE
@@ -197,7 +223,7 @@ def cli(
                 group,
                 value,
                 tag_group,
-                match,
+                tag_match,
             )
     else:
         click.echo(text)
@@ -211,7 +237,7 @@ def cli(
             group,
             value,
             tag_group,
-            match,
+            tag_match,
         )
 
     click.echo(
@@ -229,7 +255,7 @@ def process_files(
     group,
     value,
     tag_group,
-    match,
+    tag_match,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -242,7 +268,7 @@ def process_files(
         group=group,
         value=value,
         tag_groups=tag_group,
-        match=match,
+        tag_match=tag_match,
     )
 
     files_processed = 0
