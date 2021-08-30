@@ -1,7 +1,7 @@
-""" Test exif2findertags CLI"""
+""" Test exif2findertags CLI, requires exiftool to be installed (https://exiftool.org/)"""
 
 import pathlib
-from shutil import copyfile
+from shutil import copyfile, which
 
 import exif2findertags
 import osxmetadata
@@ -9,26 +9,43 @@ import pytest
 from click.testing import CliRunner
 
 TEST_IMAGE = "tests/apples.jpeg"
+TEST_VIDEO = "tests/Jellyfish.mov"
 
 
-# @pytest.fixture(scope="module")
-# def test_image(tmp_path):
-#     """copy test image to temp file"""
-#     return copyfile(
-#         TEST_IMAGE,
-#         str(tmp_path.name / pathlib.Path(TEST_IMAGE).name),
-#     )
+@pytest.fixture(scope="session")
+def exiftool_path():
+    """return path of exiftool, cache result"""
+    exiftool_path = which("exiftool")
+    if exiftool_path:
+        return exiftool_path.rstrip()
+    else:
+        raise FileNotFoundError(
+            "Could not find exiftool. Please download and install from "
+            "https://exiftool.org/"
+        )
 
 
 @pytest.fixture(scope="session")
 def tmp_image(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp("data")
-    assert pathlib.Path(tmpdir).is_dir()
-    tmpfile = copyfile(
+    return copyfile(
         TEST_IMAGE,
         tmpdir / pathlib.Path(TEST_IMAGE).name,
     )
-    return tmpfile
+
+
+@pytest.fixture(scope="session")
+def tmp_dir(tmpdir_factory):
+    tmpdir = pathlib.Path(tmpdir_factory.mktemp("data"))
+    dir1 = tmpdir / "photos"
+    dir1.mkdir()
+    dir2 = tmpdir / "videos"
+    dir2.mkdir()
+
+    copyfile(TEST_IMAGE, dir1 / pathlib.Path(TEST_IMAGE).name)
+    copyfile(TEST_VIDEO, dir2 / pathlib.Path(TEST_VIDEO).name)
+
+    return tmpdir
 
 
 def test_tag(tmp_image):
@@ -114,6 +131,134 @@ def test_all_tags_group(tmp_image):
         "EXIF:Make: Apple",
     ]:
         assert t in tags
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_group(tmp_image):
+    """test --tag-group"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag-group", "EXIF", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    for t in ["Flash: 24", "Make: Apple"]:
+        assert t in tags
+    assert "Keywords: Fruit" not in tags
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_group_value(tmp_image):
+    """test --tag-group --value"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag-group", "EXIF", "--verbose", "--value", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    for t in ["24", "Apple"]:
+        assert t in tags
+    assert "Fruit" not in tags
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_match(tmp_image):
+    """test --tag-match"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag-match", "Make", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    for t in ["Make: Apple", "LensMake: Apple"]:
+        assert t in tags
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_walk(tmp_dir):
+    """test --walk"""
+    from exif2findertags.cli import cli
+
+    file1 = str(tmp_dir / "photos" / pathlib.Path(TEST_IMAGE).name)
+    file2 = str(tmp_dir / "videos" / pathlib.Path(TEST_VIDEO).name)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag", "Make", "--tag", "DisplayName", "--verbose", "--walk", str(tmp_dir)],
+    )
+    assert result.exit_code == 0
+
+    md1 = osxmetadata.OSXMetaData(file1)
+    tags = [t.name for t in md1.tags]
+    assert "Make: Apple" in tags
+
+    md2 = osxmetadata.OSXMetaData(file2)
+    tags = [t.name for t in md2.tags]
+    assert "DisplayName: Jellyfish" in tags
+
+    # reset tags for next test
+    md1.tags = []
+    md2.tags = []
+
+
+def test_verbose(tmp_image):
+    """test --verbose"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag", "Keywords", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    assert "Writing Finder tags" in result.output
+
+    # reset tags for next test
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    md.tags = []
+
+
+def test_exiftool_path(tmp_image, exiftool_path):
+    """test --exif_tool_path"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag",
+            "Keywords",
+            "--verbose",
+            "--exiftool-path",
+            exiftool_path,
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["Keywords: Fruit", "Keywords: Travel"]
 
     # reset tags for next test
     md.tags = []
