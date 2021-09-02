@@ -29,6 +29,7 @@ class ExifToFinder:
         tag_match=None,
         fc_tags=None,
         fc_tag_values=None,
+        dry_run=False,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -43,6 +44,7 @@ class ExifToFinder:
         tag_match: a case sensitive pattern to match against tag names
         fc_tags: list of tags to write to Finder comments
         fc_tag_values: list of tag values to write to Finder comments
+        dry_run: run in dry-run mode (don't write anything)
         """
         self.tags = tags
         self.tag_values = tag_values
@@ -58,6 +60,7 @@ class ExifToFinder:
         self.tag_match = tag_match
         self.fc_tags = fc_tags
         self.fc_tag_values = fc_tag_values
+        self.dry_run = dry_run
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -189,6 +192,8 @@ class ExifToFinder:
 
     def write_finder_tags(self, filename, finder_tags):
         """Write Finder tags to file"""
+        if self.dry_run:
+            return
         md = osxmetadata.OSXMetaData(filename)
         current_tags = list(md.tags)
         tags = [osxmetadata.Tag(tag) for tag in finder_tags]
@@ -198,6 +203,8 @@ class ExifToFinder:
 
     def write_finder_comment(self, filename, comment):
         """Write Finder comment to file"""
+        if self.dry_run:
+            return
         md = osxmetadata.OSXMetaData(filename)
         fc = md.findercomment
         md.findercomment = fc + "\n" + comment if fc else comment

@@ -22,7 +22,8 @@ Once you've installed `exif2findertags` with pipx, to upgrade to the latest vers
 exif2findertags
 Usage: exif2findertags [OPTIONS] [FILES]...
 
-  Create Finder tags and/or Finder comments from EXIF and other metadata in media files.
+  Create Finder tags and/or Finder comments from EXIF and other metadata in
+  media files.
 
 Specify which metadata tags to export to Finder tags and/or comments:
   [at least 1 required]
@@ -57,7 +58,7 @@ Specify which metadata tags to export to Finder tags and/or comments:
   --fc-tag-value TAG    Photo metadata tags to use as Finder comments; use only
                         tag value as comment; multiple tags may be specified by
                         repeating --fc-tag-value, for example: `--fc-tag-value
-                        Keywords --fc-tag-value PersonInImage`.Tag values will
+                        Keywords --fc-tag-value PersonInImage`. Tag values will
                         be appended to Finder comment.
 
 Options for use with --all-tags, --tag-group, --tag-match: [mutually exclusive]
@@ -72,6 +73,8 @@ Settings:
   --walk                Recursively walk directories.
   --exiftool-path PATH  Optional path to exiftool executable (will look in
                         $PATH if not specified).
+  --dry-run             Dry run mode; do not actually modify any Finder
+                        metadata.
 
 Other options:
   --help                Show this message and exit.
@@ -122,7 +125,7 @@ This is a new project under active development. Features in work:
 - [ ] --overwrite-tags to overwrite existing Finder tags
 - [ ] --overwrite-fc to overwrite existing Finder comments 
 - [ ] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
-- [ ] --dry-run
+- [X] --dry-run
 
 # Contributing
 

@@ -305,3 +305,28 @@ def test_fc_tag_value(tmp_image):
 
     # reset findercomment for next test
     md.findercomment = None
+
+
+def test_dry_run(tmp_image):
+    """test --dry-run"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag",
+            "Make",
+            "--fc-tag",
+            "ISO",
+            "--verbose",
+            "--dry-run",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert not fc
+    tags = md.tags
+    assert not tags

@@ -166,6 +166,11 @@ formatter_settings = HelpFormatter.settings(
         default=get_exiftool_path(),
         help="Optional path to exiftool executable (will look in $PATH if not specified).",
     ),
+    option(
+        "--dry-run",
+        is_flag=True,
+        help="Dry run mode; do not actually modify any Finder metadata.",
+    ),
 )
 @argument("files", nargs=-1, type=click.Path(exists=True))
 def cli(
@@ -182,6 +187,7 @@ def cli(
     tag_match,
     fc_tag,
     fc_tag_value,
+    dry_run,
 ):
     """Create Finder tags and/or Finder comments from EXIF and other metadata in media files."""
     global VERBOSE
@@ -223,6 +229,7 @@ def cli(
                 tag_match,
                 fc_tag,
                 fc_tag_value,
+                dry_run,
             )
     else:
         click.echo(text)
@@ -239,6 +246,7 @@ def cli(
             tag_match,
             fc_tag,
             fc_tag_value,
+            dry_run,
         )
 
     click.echo(
@@ -259,6 +267,7 @@ def process_files(
     tag_match,
     fc_tag,
     fc_tag_value,
+    dry_run,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -274,6 +283,7 @@ def process_files(
         tag_match=tag_match,
         fc_tags=fc_tag,
         fc_tag_values=fc_tag_value,
+        dry_run=dry_run,
     )
 
     files_processed = 0
