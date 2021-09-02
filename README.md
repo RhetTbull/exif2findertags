@@ -130,3 +130,7 @@ This is a new project under active development. Features in work:
 # Contributing
 
 Feedback and contributions of all kinds welcome!  Please open an [issue](https://github.com/RhetTbull/exif2findertags/issues) if you would like to suggest enhancements or bug fixes.
+
+# Related Projects
+
+- [osxphotos](https://github.com/RhetTbull/osxphotos) export photos and metadata from Apple Photos.  Includes ability to write data to Finder tags and comments like exif2findertags.
