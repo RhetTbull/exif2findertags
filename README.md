@@ -428,12 +428,14 @@ This is a new project under active development. Features in work:
 - [X] --tag-group GROUP to output all tags in a certain group, e.g. --tag-group EXIF
 - [X] Ability to also set the Finder comment field based on tag values, (for example, image description)
 - [ ] Ability to use a config file to specify which tags to export
-- [ ] Ability to specify tag format to use when creating new Finder tags
+- [X] Ability to specify tag format to use when creating new Finder tags
 - [X] Tests
 - [X] --overwrite-tags to overwrite existing Finder tags
 - [X] --overwrite-fc to overwrite existing Finder comments 
 - [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 - [X] --dry-run
+- [ ] --tag-template for specifying custom tags
+- [ ] --fc-template for specifying custom Finder comments
 - [ ] --xattr-template for adding arbitrary extended attributes in addition to tags and comments
 
 # Contributing
