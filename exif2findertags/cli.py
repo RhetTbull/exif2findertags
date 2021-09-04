@@ -211,12 +211,12 @@ formatter_settings = HelpFormatter.settings(
         "--group",
         "-G",
         is_flag=True,
-        help="Include tag group in Finder tag (for example, 'EXIF:Make' instead of 'Make') when used with --all-tags --tag-group, --tag-match.",
+        help="Include tag group in Finder tag (for example, 'EXIF:Make' instead of 'Make') when used with --all-tags, --tag-group, --tag-match.",
     ),
     option(
         "--value",
         is_flag=True,
-        help="Use only tag value (not tag name) as Finder tag when used with --all-tags.",
+        help="Use only tag value (not tag name) as Finder tag when used with --all-tags, --tag-group, --tag-match.",
     ),
     constraint=mutually_exclusive,
 )

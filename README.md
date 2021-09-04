@@ -98,9 +98,9 @@ Formatting options:
 Options for use with --all-tags, --tag-group, --tag-match: [mutually exclusive]
   -G, --group              Include tag group in Finder tag (for example,
                            'EXIF:Make' instead of 'Make') when used with --all-
-                           tags --tag-group, --tag-match.
+                           tags, --tag-group, --tag-match.
   --value                  Use only tag value (not tag name) as Finder tag when
-                           used with --all-tags.
+                           used with --all-tags, --tag-group, --tag-match.
 
 Settings:
   -V, --verbose            Show verbose output.
