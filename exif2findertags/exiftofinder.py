@@ -230,15 +230,21 @@ class ExifToFinder:
         """Format a tag value with a template"""
         phototemplate = PhotoTemplate(filename)
         options = RenderOptions(tag=tag, exiftool=exiftool, filepath=filename)
-        rendered, _ = phototemplate.render(template, options)
-        return rendered
+        try:
+            rendered, _ = phototemplate.render(template, options)
+            return rendered
+        except ValueError as e:
+            raise ValueError(f"Invalid template syntax for template '{template}': {e}")
 
     def render_template(self, template, filename, exiftool):
         """Render a template"""
         phototemplate = PhotoTemplate(filename)
         options = RenderOptions(tag=None, exiftool=exiftool, filepath=filename)
-        rendered, _ = phototemplate.render(template, options)
-        return rendered
+        try:
+            rendered, _ = phototemplate.render(template, options)
+            return rendered
+        except ValueError as e:
+            raise ValueError(f"Invalid template syntax for template '{template}': {e}")
 
 
 def exif_values_to_list(value):
