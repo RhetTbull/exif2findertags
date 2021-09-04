@@ -46,7 +46,16 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=["osxmetadata>=0.99.33", "click>=8.0", "yaspin>=2.1.0", "cloup>=0.11.0"],
+    install_requires=[
+        "osxmetadata>=0.99.33",
+        "click>=8.0",
+        "yaspin>=2.1.0",
+        "cloup>=0.11.0",
+        "textx>=2.3.0",
+        "pathvalidate>=2.4.1",
+        "rich>=10.9.0",
+    ],
     python_requires=">=3.7",
     entry_points={"console_scripts": ["exif2findertags=exif2findertags.cli:cli"]},
+    include_package_data=True,
 )

@@ -4,12 +4,17 @@ import pathlib
 
 import osxmetadata
 
-from .exiftool import ExifTool, get_exiftool_path
+from .exiftool import ExifToolCaching, get_exiftool_path
+from .phototemplate import PhotoTemplate, RenderOptions
 
 
 def noop():
     """Do nothing"""
     pass
+
+
+DEFAULT_GROUP_TAG_TEMPLATE = "{GROUP}:{TAG}: {VALUE}"
+DEFAULT_TAG_TEMPLATE = "{TAG}: {VALUE}"
 
 
 class ExifToFinder:
@@ -30,6 +35,8 @@ class ExifToFinder:
         fc_tags=None,
         fc_tag_values=None,
         dry_run=False,
+        tag_format=None,
+        fc_format=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -45,7 +52,10 @@ class ExifToFinder:
         fc_tags: list of tags to write to Finder comments
         fc_tag_values: list of tag values to write to Finder comments
         dry_run: run in dry-run mode (don't write anything)
+        tag_format: template string for writing Finder tags
+        fc_format: template string for writing Finder comments
         """
+
         self.tags = tags
         self.tag_values = tag_values
         self.exiftool_path = exiftool_path or get_exiftool_path()
@@ -61,6 +71,8 @@ class ExifToFinder:
         self.fc_tags = fc_tags
         self.fc_tag_values = fc_tag_values
         self.dry_run = dry_run
+        self.tag_format = tag_format
+        self.fc_format = fc_format
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -79,7 +91,7 @@ class ExifToFinder:
 
     def process_file(self, filename):
         """Process each filename applying exif metadata to extended attributes"""
-        exiftool = ExifTool(filename, exiftool=self.exiftool_path)
+        exiftool = ExifToolCaching(filename, exiftool=self.exiftool_path)
         exifdict_no_groups = exiftool.asdict(tag_groups=False)
         exifdict_groups = exiftool.asdict()
         exifdict = exifdict_no_groups.copy()
@@ -98,21 +110,13 @@ class ExifToFinder:
         for tag in self.tags:
             tag_name = exifdict_lc.get(tag.lower())
             if tag_name:
-                value = exifdict[tag_name]
-                if isinstance(value, list):
-                    value = [v for v in value if not str(v).startswith("(Binary data ")]
-                    finder_tags.extend([f"{tag_name}: {v}" for v in value])
-                elif not str(value).startswith("(Binary data "):
-                    finder_tags.append(f"{tag_name}: {value}")
+                rendered = self.format_tag_value(filename, tag_name, exiftool)
+                finder_tags.extend(rendered)
         for tag_value in self.tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
                 value = exifdict[tag_name]
-                if isinstance(value, list):
-                    value = [v for v in value if not str(v).startswith("(Binary data ")]
-                    finder_tags.extend([str(v) for v in value])
-                elif not str(value).startswith("(Binary data "):
-                    finder_tags.append(str(value))
+                finder_tags.extend(exif_values_to_list(value))
 
         if self.all_tags or self.tag_groups or self.tag_match:
             # process all tags or specific tag groups
@@ -131,26 +135,13 @@ class ExifToFinder:
                     continue
 
                 if self.group:
-                    if isinstance(value, list):
-                        value = [
-                            v for v in value if not str(v).startswith("(Binary data ")
-                        ]
-                        finder_tags.extend([f"{tag}: {v}" for v in value])
-                    elif not str(value).startswith("(Binary data "):
-                        finder_tags.append(f"{tag}: {value}")
+                    rendered = self.format_tag_value(filename, tag, exiftool)
+                    finder_tags.extend(rendered)
                 elif self.value:
-                    if isinstance(value, list):
-                        value = [
-                            v for v in value if not str(v).startswith("(Binary data ")
-                        ]
-                        finder_tags.extend([str(v) for v in value])
-                    elif not str(value).startswith("(Binary data "):
-                        finder_tags.append(str(value))
-                elif isinstance(value, list):
-                    value = [v for v in value if not str(v).startswith("(Binary data ")]
-                    finder_tags.extend([f"{tag_name}: {v}" for v in value])
-                elif not str(value).startswith("(Binary data "):
-                    finder_tags.append(f"{tag_name}: {value}")
+                    finder_tags.extend(exif_values_to_list(value))
+                else:
+                    rendered = self.format_tag_value(filename, tag_name, exiftool)
+                    finder_tags.extend(rendered)
 
         # eliminate duplicates
         finder_tags = list(set(finder_tags))
@@ -167,20 +158,13 @@ class ExifToFinder:
             tag_name = exifdict_lc.get(tag.lower())
             if tag_name:
                 value = exifdict[tag_name]
-                if isinstance(value, list):
-                    value = [v for v in value if not str(v).startswith("(Binary data ")]
-                    finder_comment.extend([f"{tag_name}: {v}" for v in value])
-                elif not str(value).startswith("(Binary data "):
-                    finder_comment.append(f"{tag_name}: {value}")
+                rendered = self.format_fc_value(filename, tag_name, exiftool)
+                finder_comment.extend(rendered)
         for tag_value in self.fc_tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
                 value = exifdict[tag_name]
-                if isinstance(value, list):
-                    value = [v for v in value if not str(v).startswith("(Binary data ")]
-                    finder_comment.extend([str(v) for v in value])
-                elif not str(value).startswith("(Binary data "):
-                    finder_comment.append(str(value))
+                finder_comment.extend(exif_values_to_list(value))
 
         comment = "\n".join(finder_comment)
         if comment:
@@ -208,3 +192,33 @@ class ExifToFinder:
         md = osxmetadata.OSXMetaData(filename)
         fc = md.findercomment
         md.findercomment = fc + "\n" + comment if fc else comment
+
+    def format_tag_value(self, filename, tag, exiftool):
+        """Format a tag value with a template"""
+        template = self.tag_format or (
+            DEFAULT_GROUP_TAG_TEMPLATE if ":" in tag else DEFAULT_TAG_TEMPLATE
+        )
+        return self._format_value_with_template(template, filename, tag, exiftool)
+
+    def format_fc_value(self, filename, tag, exiftool):
+        """Format a Finder comment value with a template"""
+        template = self.fc_format or (
+            DEFAULT_GROUP_TAG_TEMPLATE if ":" in tag else DEFAULT_TAG_TEMPLATE
+        )
+        return self._format_value_with_template(template, filename, tag, exiftool)
+
+    def _format_value_with_template(self, template, filename, tag, exiftool):
+        """Format a tag value with a template"""
+        phototemplate = PhotoTemplate(filename)
+        options = RenderOptions(tag=tag, exiftool=exiftool, filepath=filename)
+        rendered, _ = phototemplate.render(template, options)
+        return rendered
+
+
+def exif_values_to_list(value):
+    """Convert a value returned by ExifTool to a list if it is not already and filter out bad data"""
+    if isinstance(value, list):
+        value = [v for v in value if not str(v).startswith("(Binary data ")]
+        return [str(v) for v in value]
+    elif not str(value).startswith("(Binary data "):
+        return [str(value)]

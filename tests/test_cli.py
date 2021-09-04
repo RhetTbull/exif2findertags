@@ -264,14 +264,14 @@ def test_exiftool_path(tmp_image, exiftool_path):
     md.tags = []
 
 
-def test_fc_tag(tmp_image):
-    """test --fc-tag"""
+def test_fc(tmp_image):
+    """test --fc"""
     from exif2findertags.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["--fc-tag", "Make", "--fc-tag", "ISO", "--verbose", str(tmp_image)],
+        ["--fc", "Make", "--fc", "ISO", "--verbose", str(tmp_image)],
     )
     assert result.exit_code == 0
     md = osxmetadata.OSXMetaData(str(tmp_image))
@@ -282,17 +282,17 @@ def test_fc_tag(tmp_image):
     md.findercomment = None
 
 
-def test_fc_tag_value(tmp_image):
-    """test --fc-tag-value"""
+def test_fc_value(tmp_image):
+    """test --fc-value"""
     from exif2findertags.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(
         cli,
         [
-            "--fc-tag-value",
+            "--fc-value",
             "Make",
-            "--fc-tag-value",
+            "--fc-value",
             "ISO",
             "--verbose",
             str(tmp_image),
@@ -317,7 +317,7 @@ def test_dry_run(tmp_image):
         [
             "--tag",
             "Make",
-            "--fc-tag",
+            "--fc",
             "ISO",
             "--verbose",
             "--dry-run",
@@ -330,3 +330,107 @@ def test_dry_run(tmp_image):
     assert not fc
     tags = md.tags
     assert not tags
+
+
+def test_tag_format(tmp_image):
+    """test --tag-format"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag",
+            "Keywords",
+            "--tag-format",
+            "{TAG}={VALUE}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["Keywords=Fruit", "Keywords=Travel"]
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_format_group(tmp_image):
+    """test --tag-format"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag",
+            "IPTC:Keywords",
+            "--tag-format",
+            "{GROUP}:{TAG}={VALUE}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["IPTC:Keywords=Fruit", "IPTC:Keywords=Travel"]
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_fc_format(tmp_image):
+    """test --fc-format"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--fc",
+            "Make",
+            "--fc",
+            "ISO",
+            "--fc-format",
+            "{TAG}={VALUE}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Make=Apple\nISO=20"
+
+    # reset findercomment for next test
+    md.findercomment = None
+
+
+def test_fc_format_filter(tmp_image):
+    """test --fc-format with a filter"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--fc",
+            "Make",
+            "--fc",
+            "ISO",
+            "--fc-format",
+            "{TAG|lower}={VALUE|upper}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "make=APPLE\niso=20"
+
+    # reset findercomment for next test
+    md.findercomment = None

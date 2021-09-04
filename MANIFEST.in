@@ -1,0 +1,3 @@
+include README.md
+include exif2findertags/phototemplate.tx
+include exif2findertags/phototemplate.md
