@@ -434,6 +434,7 @@ This is a new project under active development. Features in work:
 - [X] --overwrite-fc to overwrite existing Finder comments 
 - [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 - [X] --dry-run
+- [ ] --xattr-template for adding arbitrary extended attributes in addition to tags and comments
 
 # Contributing
 
