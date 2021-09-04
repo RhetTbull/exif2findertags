@@ -66,8 +66,16 @@ Specify which metadata tags to export to Finder tags and/or comments:
                            "Camera: {Make|titlecase}{comma} {Model|titlecase}"'
                            would result in a tag of 'Camera: Nikon Corporation,
                            Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and
-                           'EXIF:Model=NIKON D810'See Template System for
+                           'EXIF:Model=NIKON D810'. See Template System for
                            additional details.
+  --fc-template TEMPLATE   Specify a custom template for Finder comments.
+                           Multiple templates may be specified by repeating '--
+                           fc-template TEMPLATE'. For example, '--fc-template
+                           "Camera: {Make|titlecase}{comma} {Model|titlecase}"'
+                           would result in a Finder comment of 'Camera: Nikon
+                           Corporation, Nikon D810' if 'EXIF:Make=NIKON
+                           CORPORATION' and 'EXIF:Model=NIKON D810'. See Template
+                           System for additional details.
 
 Formatting options:
   --tag-format TEMPLATE    Template for specifying Finder tag format. '{GROUP}'
@@ -152,7 +160,10 @@ pretext and posttext are free form text.  For example, if a photo has Title
 (e.g. XMP:Title) "My Photo Title". the template statement "The title of the    
 photo is {Title}", resolves to "The title of the photo is My Photo Title".  The
 pretext in this example is "The title if the photo is " and the template_field 
-is {Title}.                                                                    
+is {Title}.  Note: some punctuation such as commas cannot be used in the       
+pretext or posttext.  For this reason, the template system provides special    
+punctuation templates like {comma} to insert punctuation where needed. For     
+example: {Make}{comma}{Model} could resolve to Apple,iPhone SE.                
 
 delim: optional delimiter string to use when expanding multi-valued template   
 values in-place                                                                
@@ -444,7 +455,7 @@ This is a new project under active development. Features in work:
 - [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 - [X] --dry-run
 - [X] --tag-template for specifying custom tags
-- [ ] --fc-template for specifying custom Finder comments
+- [X] --fc-template for specifying custom Finder comments
 - [ ] --xattr-template for adding arbitrary extended attributes in addition to tags and comments
 
 # Contributing

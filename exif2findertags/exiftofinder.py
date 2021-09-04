@@ -40,6 +40,7 @@ class ExifToFinder:
         overwrite_tags=False,
         overwrite_fc=False,
         tag_template=None,
+        fc_template=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -59,6 +60,8 @@ class ExifToFinder:
         fc_format: template string for writing Finder comments
         overwrite_tags: overwrite existing Finder tags
         overwrite_fc: overwrite existing Finder comments
+        tag_template: list of template strings for writing Finder tags
+        fc_template: list of template strings for writing Finder comments
         """
 
         self.tags = tags
@@ -81,6 +84,7 @@ class ExifToFinder:
         self.overwrite_tags = overwrite_tags
         self.overwrite_fc = overwrite_fc
         self.tag_template = tag_template
+        self.fc_template = fc_template
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -120,6 +124,7 @@ class ExifToFinder:
             if tag_name:
                 rendered = self.format_tag_value(filename, tag_name, exiftool)
                 finder_tags.extend(rendered)
+
         for tag_value in self.tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
@@ -173,11 +178,17 @@ class ExifToFinder:
                 value = exifdict[tag_name]
                 rendered = self.format_fc_value(filename, tag_name, exiftool)
                 finder_comment.extend(rendered)
+
         for tag_value in self.fc_tag_values:
             tag_name = exifdict_lc.get(tag_value.lower())
             if tag_name:
                 value = exifdict[tag_name]
                 finder_comment.extend(exif_values_to_list(value))
+
+        if self.fc_template:
+            for template in self.fc_template:
+                rendered = self.render_template(template, filename, exiftool)
+                finder_comment.extend(rendered)
 
         comment = "\n".join(finder_comment)
         if comment:

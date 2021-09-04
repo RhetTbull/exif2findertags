@@ -3,10 +3,11 @@
 import pathlib
 from shutil import copyfile, which
 
-import exif2findertags
 import osxmetadata
 import pytest
 from click.testing import CliRunner
+
+import exif2findertags
 
 TEST_IMAGE = "tests/apples.jpeg"
 TEST_VIDEO = "tests/Jellyfish.mov"
@@ -590,3 +591,49 @@ def test_tag_template_2(tmp_image):
 
     # reset tags for next test
     md.tags = []
+
+
+def test_fc_template(tmp_image):
+    """test --fc-template"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--fc-template",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    assert md.findercomment == "Camera: Apple, iPhone SE (2nd generation)"
+
+    # reset comments for next test
+    md.findercomment = None
+
+
+def test_fc_template_2(tmp_image):
+    """test --fc-template with multiple templates"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--fc-template",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--fc-template",
+            "ISO={ISO}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    assert md.findercomment == "Camera: Apple, iPhone SE (2nd generation)\nISO=20"
+
+    # reset comments for next test
+    md.findercomment = None

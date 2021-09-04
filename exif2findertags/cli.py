@@ -170,7 +170,16 @@ formatter_settings = HelpFormatter.settings(
         metavar="TEMPLATE",
         help="Specify a custom template for Finder tag.  Multiple templates may be specified by repeating '--tag-template TEMPLATE'. "
         "For example, '--tag-template \"Camera: {Make|titlecase}{comma} {Model|titlecase}\"' "
-        "would result in a tag of 'Camera: Nikon Corporation, Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and 'EXIF:Model=NIKON D810'"
+        "would result in a tag of 'Camera: Nikon Corporation, Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and 'EXIF:Model=NIKON D810'. "
+        "See Template System for additional details.",
+    ),
+    option(
+        "--fc-template",
+        multiple=True,
+        metavar="TEMPLATE",
+        help="Specify a custom template for Finder comments.  Multiple templates may be specified by repeating '--fc-template TEMPLATE'. "
+        "For example, '--fc-template \"Camera: {Make|titlecase}{comma} {Model|titlecase}\"' "
+        "would result in a Finder comment of 'Camera: Nikon Corporation, Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and 'EXIF:Model=NIKON D810'. "
         "See Template System for additional details.",
     ),
     constraint=RequireAtLeast(1),
@@ -248,6 +257,7 @@ def cli(
     files,
     all_tags,
     tag_template,
+    fc_template,
     tag_format,
     group,
     value,
@@ -305,6 +315,7 @@ def cli(
         overwrite_tags=overwrite_tags,
         overwrite_fc=overwrite_fc,
         tag_template=tag_template,
+        fc_template=fc_template,
     )
 
     if not VERBOSE:
@@ -338,6 +349,7 @@ def process_files(
     overwrite_tags,
     overwrite_fc,
     tag_template,
+    fc_template,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -359,6 +371,7 @@ def process_files(
         overwrite_tags=overwrite_tags,
         overwrite_fc=overwrite_fc,
         tag_template=tag_template,
+        fc_template=fc_template,
     )
 
     files_processed = 0
