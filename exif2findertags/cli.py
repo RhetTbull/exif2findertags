@@ -30,6 +30,7 @@ from ._version import __version__
 from .exiftofinder import DEFAULT_GROUP_TAG_TEMPLATE, DEFAULT_TAG_TEMPLATE, ExifToFinder
 from .exiftool import get_exiftool_path
 from .phototemplate import TEMPLATE_SUBSTITUTIONS_ALL, get_template_help
+from functools import partial
 
 # if True, shows verbose output, controlled via --verbose flag
 VERBOSE = False
@@ -163,6 +164,15 @@ formatter_settings = HelpFormatter.settings(
         + "multiple tags may be specified by repeating --fc-value, for example: `--fc-value Keywords --fc-value PersonInImage`. "
         + "Tag values will be appended to Finder comment.",
     ),
+    option(
+        "--tag-template",
+        multiple=True,
+        metavar="TEMPLATE",
+        help="Specify a custom template for Finder tag.  Multiple templates may be specified by repeating '--tag-template TEMPLATE'. "
+        "For example, '--tag-template \"Camera: {Make|titlecase}{comma} {Model|titlecase}\"' "
+        "would result in a tag of 'Camera: Nikon Corporation, Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and 'EXIF:Model=NIKON D810'"
+        "See Template System for additional details.",
+    ),
     constraint=RequireAtLeast(1),
 )
 @option_group(
@@ -237,6 +247,7 @@ def cli(
     exiftool_path,
     files,
     all_tags,
+    tag_template,
     tag_format,
     group,
     value,
@@ -274,48 +285,34 @@ def cli(
         print_help_msg(cli)
         sys.exit(1)
 
+    process_files_ = partial(
+        process_files,
+        files=files,
+        tag=tag,
+        tag_value=tag_value,
+        exiftool_path=exiftool_path,
+        walk=walk,
+        all_tags=all_tags,
+        group=group,
+        tag_format=tag_format,
+        fc_format=fc_format,
+        value=value,
+        tag_group=tag_group,
+        tag_match=tag_match,
+        fc=fc,
+        fc_value=fc_value,
+        dry_run=dry_run,
+        overwrite_tags=overwrite_tags,
+        overwrite_fc=overwrite_fc,
+        tag_template=tag_template,
+    )
+
     if not VERBOSE:
         with yaspin(text=text):
-            files_updated = process_files(
-                files=files,
-                tag=tag,
-                tag_value=tag_value,
-                exiftool_path=exiftool_path,
-                walk=walk,
-                all_tags=all_tags,
-                group=group,
-                tag_format=tag_format,
-                fc_format=fc_format,
-                value=value,
-                tag_group=tag_group,
-                tag_match=tag_match,
-                fc=fc,
-                fc_value=fc_value,
-                dry_run=dry_run,
-                overwrite_tags=overwrite_tags,
-                overwrite_fc=overwrite_fc,
-            )
+            files_updated = process_files_()
     else:
         click.echo(text)
-        files_updated = process_files(
-            files=files,
-            tag=tag,
-            tag_value=tag_value,
-            exiftool_path=exiftool_path,
-            walk=walk,
-            all_tags=all_tags,
-            group=group,
-            tag_format=tag_format,
-            fc_format=fc_format,
-            value=value,
-            tag_group=tag_group,
-            tag_match=tag_match,
-            fc=fc,
-            fc_value=fc_value,
-            dry_run=dry_run,
-            overwrite_tags=overwrite_tags,
-            overwrite_fc=overwrite_fc,
-        )
+        files_updated = process_files_()
 
     click.echo(
         f"Done. Updated metadata for {files_updated} {'file' if files_updated == 1 else 'files'}."
@@ -340,6 +337,7 @@ def process_files(
     dry_run,
     overwrite_tags,
     overwrite_fc,
+    tag_template,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -360,6 +358,7 @@ def process_files(
         fc_format=fc_format,
         overwrite_tags=overwrite_tags,
         overwrite_fc=overwrite_fc,
+        tag_template=tag_template,
     )
 
     files_processed = 0

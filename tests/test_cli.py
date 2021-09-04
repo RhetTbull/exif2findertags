@@ -538,3 +538,55 @@ def test_fc_overwrite(tmp_image):
 
     # reset findercomment for next test
     md.findercomment = None
+
+
+def test_tag_template(tmp_image):
+    """test --tag-template"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag-template",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["Camera: Apple, iPhone SE (2nd generation)"]
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_template_2(tmp_image):
+    """test --tag-template with multiple templates"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--tag-template",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--tag-template",
+            "kw={keywords}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == [
+        "Camera: Apple, iPhone SE (2nd generation)",
+        "kw=Fruit",
+        "kw=Travel",
+    ]
+
+    # reset tags for next test
+    md.tags = []

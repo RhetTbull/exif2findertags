@@ -27,79 +27,88 @@ Usage: exif2findertags [OPTIONS] [FILES]...
 
 Specify which metadata tags to export to Finder tags and/or comments:
   [at least 1 required]
-  --tag TAG              Photo metadata tags to use as Finder tags; multiple
-                         tags may be specified by repeating --tag, for example:
-                         `--tag Keywords --tag ISO`. Finder tags will be in
-                         form 'TAG: VALUE', e.g. 'ISO: 80' or 'IPTC:Keywords:
-                         Travel'. If the group name is specified it will be
-                         included in the Finder tag name, otherwise, just the
-                         tag name will be included.
-  --tag-value TAG        Photo metadata tags to use as Finder tags; use only
-                         tag value as keyword; multiple tags may be specified
-                         by repeating --tag-value, for example: `--tag-value
-                         Keywords --tag-value PersonInImage`.
-  --all-tags             Include all metadata found in file as Finder tags; see
-                         also, --group, --value.
-  --tag-group GROUP      Include all metadata from GROUP tag group, e.g. '--
-                         tag-group EXIF', '--tag-group XMP'; see also, --group,
-                         --value.
-  --tag-match PATTERN    Include all metadata tags whose tag name matches
-                         PATTERN, e.g. '--tag-match Exposure'; see also,
-                         --group, --value. PATTERN is case-sensitive, e.g. '--
-                         tag-match Exposure' matches EXIF:ExposureTime,
-                         EXIF:ExposureMode, etc. but '--tag-match exposure'
-                         would not; see also, --group, --value
-  --fc TAG               Photo metadata tags to use as Finder comments;
-                         multiple tags may be specified by repeating --fc, for
-                         example: `--fc Keywords --fc ISO`. Tags will be
-                         appended to Finder comment. If the group name is
-                         specified it will be included in the Finder comment,
-                         otherwise, just the tag name will be included.
-  --fc-value TAG         Photo metadata tags to use as Finder comments; use
-                         only tag value as comment; multiple tags may be
-                         specified by repeating --fc-value, for example: `--fc-
-                         value Keywords --fc-value PersonInImage`. Tag values
-                         will be appended to Finder comment.
+  --tag TAG                Photo metadata tags to use as Finder tags; multiple
+                           tags may be specified by repeating --tag, for
+                           example: `--tag Keywords --tag ISO`. Finder tags
+                           will be in form 'TAG: VALUE', e.g. 'ISO: 80' or
+                           'IPTC:Keywords: Travel'. If the group name is
+                           specified it will be included in the Finder tag
+                           name, otherwise, just the tag name will be included.
+  --tag-value TAG          Photo metadata tags to use as Finder tags; use only
+                           tag value as keyword; multiple tags may be specified
+                           by repeating --tag-value, for example: `--tag-value
+                           Keywords --tag-value PersonInImage`.
+  --all-tags               Include all metadata found in file as Finder tags;
+                           see also, --group, --value.
+  --tag-group GROUP        Include all metadata from GROUP tag group, e.g. '--
+                           tag-group EXIF', '--tag-group XMP'; see also,
+                           --group, --value.
+  --tag-match PATTERN      Include all metadata tags whose tag name matches
+                           PATTERN, e.g. '--tag-match Exposure'; see also,
+                           --group, --value. PATTERN is case-sensitive, e.g. '
+                           --tag-match Exposure' matches EXIF:ExposureTime,
+                           EXIF:ExposureMode, etc. but '--tag-match exposure'
+                           would not; see also, --group, --value
+  --fc TAG                 Photo metadata tags to use as Finder comments;
+                           multiple tags may be specified by repeating --fc,
+                           for example: `--fc Keywords --fc ISO`. Tags will be
+                           appended to Finder comment. If the group name is
+                           specified it will be included in the Finder comment,
+                           otherwise, just the tag name will be included.
+  --fc-value TAG           Photo metadata tags to use as Finder comments; use
+                           only tag value as comment; multiple tags may be
+                           specified by repeating --fc-value, for example:
+                           `--fc-value Keywords --fc-value PersonInImage`. Tag
+                           values will be appended to Finder comment.
+  --tag-template TEMPLATE  Specify a custom template for Finder tag.  Multiple
+                           templates may be specified by repeating '--tag-
+                           template TEMPLATE'. For example, '--tag-template
+                           "Camera: {Make|titlecase}{comma} {Model|titlecase}"'
+                           would result in a tag of 'Camera: Nikon Corporation,
+                           Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and
+                           'EXIF:Model=NIKON D810'See Template System for
+                           additional details.
 
 Formatting options:
-  --tag-format TEMPLATE  Template for specifying Finder tag format. '{GROUP}'
-                         will be replaced with group name of tag (as specified
-                         by exiftool), '{TAG}' will be replaced by tag name,
-                         and '{VALUE}' will be replaced by the tag value.
-                         Default tag template is '{GROUP}:{TAG}: {VALUE}' if
-                         tag group specified otherwise '{TAG}: {VALUE}'. See
-                         Template System for additional details.
-  --fc-format TEMPLATE   Template for specifying Finder comment format.
-                         '{GROUP}' will be replaced with group name of tag (as
-                         specified by exiftool), '{TAG}' will be replaced by
-                         tag name, and '{VALUE}' will be replaced by the tag
-                         value. Default Finder comment template is
-                         '{GROUP}:{TAG}: {VALUE}' if tag group specified
-                         otherwise '{TAG}: {VALUE}'. See Template System for
-                         additional details.
+  --tag-format TEMPLATE    Template for specifying Finder tag format. '{GROUP}'
+                           will be replaced with group name of tag (as
+                           specified by exiftool), '{TAG}' will be replaced by
+                           tag name, and '{VALUE}' will be replaced by the tag
+                           value. Default tag template is '{GROUP}:{TAG}:
+                           {VALUE}' if tag group specified otherwise '{TAG}:
+                           {VALUE}'. See Template System for additional
+                           details.
+  --fc-format TEMPLATE     Template for specifying Finder comment format.
+                           '{GROUP}' will be replaced with group name of tag
+                           (as specified by exiftool), '{TAG}' will be replaced
+                           by tag name, and '{VALUE}' will be replaced by the
+                           tag value. Default Finder comment template is
+                           '{GROUP}:{TAG}: {VALUE}' if tag group specified
+                           otherwise '{TAG}: {VALUE}'. See Template System for
+                           additional details.
 
 Options for use with --all-tags, --tag-group, --tag-match: [mutually exclusive]
-  -G, --group            Include tag group in Finder tag (for example,
-                         'EXIF:Make' instead of 'Make') when used with --all-
-                         tags --tag-group, --tag-match.
-  --value                Use only tag value (not tag name) as Finder tag when
-                         used with --all-tags.
+  -G, --group              Include tag group in Finder tag (for example,
+                           'EXIF:Make' instead of 'Make') when used with --all-
+                           tags --tag-group, --tag-match.
+  --value                  Use only tag value (not tag name) as Finder tag when
+                           used with --all-tags.
 
 Settings:
-  -V, --verbose          Show verbose output.
-  --walk                 Recursively walk directories.
-  --exiftool-path PATH   Optional path to exiftool executable (will look in
-                         $PATH if not specified).
-  --dry-run              Dry run mode; do not actually modify any Finder
-                         metadata.
-  --overwrite-tags       Overwrite existing Finder tags (default is to append
-                         to existing).
-  --overwrite-fc         Overwrite existing Finder comments (default is to
-                         append to existing).
+  -V, --verbose            Show verbose output.
+  --walk                   Recursively walk directories.
+  --exiftool-path PATH     Optional path to exiftool executable (will look in
+                           $PATH if not specified).
+  --dry-run                Dry run mode; do not actually modify any Finder
+                           metadata.
+  --overwrite-tags         Overwrite existing Finder tags (default is to append
+                           to existing).
+  --overwrite-fc           Overwrite existing Finder comments (default is to
+                           append to existing).
 
 Other options:
-  --version              Show the version and exit.
-  --help                 Show this message and exit.
+  --version                Show the version and exit.
+  --help                   Show this message and exit.
 
 Tag names used with --tag and --tag-value may be any tag that exiftool can
 read. For a complete list of tag values, see https://exiftool.org/TagNames/.
@@ -434,7 +443,7 @@ This is a new project under active development. Features in work:
 - [X] --overwrite-fc to overwrite existing Finder comments 
 - [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 - [X] --dry-run
-- [ ] --tag-template for specifying custom tags
+- [X] --tag-template for specifying custom tags
 - [ ] --fc-template for specifying custom Finder comments
 - [ ] --xattr-template for adding arbitrary extended attributes in addition to tags and comments
 

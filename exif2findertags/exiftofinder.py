@@ -39,6 +39,7 @@ class ExifToFinder:
         fc_format=None,
         overwrite_tags=False,
         overwrite_fc=False,
+        tag_template=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -79,6 +80,7 @@ class ExifToFinder:
         self.fc_format = fc_format
         self.overwrite_tags = overwrite_tags
         self.overwrite_fc = overwrite_fc
+        self.tag_template = tag_template
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -148,6 +150,11 @@ class ExifToFinder:
                 else:
                     rendered = self.format_tag_value(filename, tag_name, exiftool)
                     finder_tags.extend(rendered)
+
+        if self.tag_template:
+            for template in self.tag_template:
+                rendered = self.render_template(template, filename, exiftool)
+                finder_tags.extend(rendered)
 
         # eliminate duplicates
         finder_tags = list(set(finder_tags))
@@ -223,6 +230,13 @@ class ExifToFinder:
         """Format a tag value with a template"""
         phototemplate = PhotoTemplate(filename)
         options = RenderOptions(tag=tag, exiftool=exiftool, filepath=filename)
+        rendered, _ = phototemplate.render(template, options)
+        return rendered
+
+    def render_template(self, template, filename, exiftool):
+        """Render a template"""
+        phototemplate = PhotoTemplate(filename)
+        options = RenderOptions(tag=None, exiftool=exiftool, filepath=filename)
         rendered, _ = phototemplate.render(template, options)
         return rendered
 
