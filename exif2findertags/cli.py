@@ -216,6 +216,16 @@ formatter_settings = HelpFormatter.settings(
         is_flag=True,
         help="Dry run mode; do not actually modify any Finder metadata.",
     ),
+    option(
+        "--overwrite-tags",
+        is_flag=True,
+        help="Overwrite existing Finder tags (default is to append to existing).",
+    ),
+    option(
+        "--overwrite-fc",
+        is_flag=True,
+        help="Overwrite existing Finder comments (default is to append to existing).",
+    ),
 )
 @version_option(version=__version__)
 @argument("files", nargs=-1, type=click.Path(exists=True))
@@ -236,6 +246,8 @@ def cli(
     fc_value,
     dry_run,
     fc_format,
+    overwrite_tags,
+    overwrite_fc,
 ):
     """Create Finder tags and/or Finder comments from EXIF and other metadata in media files."""
     global VERBOSE
@@ -280,6 +292,8 @@ def cli(
                 fc=fc,
                 fc_value=fc_value,
                 dry_run=dry_run,
+                overwrite_tags=overwrite_tags,
+                overwrite_fc=overwrite_fc,
             )
     else:
         click.echo(text)
@@ -299,6 +313,8 @@ def cli(
             fc=fc,
             fc_value=fc_value,
             dry_run=dry_run,
+            overwrite_tags=overwrite_tags,
+            overwrite_fc=overwrite_fc,
         )
 
     click.echo(
@@ -322,6 +338,8 @@ def process_files(
     fc,
     fc_value,
     dry_run,
+    overwrite_tags,
+    overwrite_fc,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -340,6 +358,8 @@ def process_files(
         dry_run=dry_run,
         tag_format=tag_format,
         fc_format=fc_format,
+        overwrite_tags=overwrite_tags,
+        overwrite_fc=overwrite_fc,
     )
 
     files_processed = 0

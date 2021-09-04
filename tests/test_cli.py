@@ -434,3 +434,107 @@ def test_fc_format_filter(tmp_image):
 
     # reset findercomment for next test
     md.findercomment = None
+
+
+def test_tag_no_overwrite(tmp_image):
+    """test --tag without --overwrite-tags"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag", "Keywords", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+
+    result = runner.invoke(
+        cli,
+        ["--tag", "ISO", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["ISO: 20", "Keywords: Fruit", "Keywords: Travel"]
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_tag_overwrite(tmp_image):
+    """test --tag with --overwrite-tags"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--tag", "Keywords", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+
+    result = runner.invoke(
+        cli,
+        ["--tag", "ISO", "--overwrite-tags", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    tags = [t.name for t in md.tags]
+    assert sorted(tags) == ["ISO: 20"]
+
+    # reset tags for next test
+    md.tags = []
+
+
+def test_fc_no_overwrite(tmp_image):
+    """test --fc without --overwrite-fc"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--fc", "Make", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Make: Apple"
+
+    result = runner.invoke(
+        cli,
+        ["--fc", "ISO", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Make: Apple\nISO: 20"
+
+    # reset findercomment for next test
+    md.findercomment = None
+
+
+def test_fc_overwrite(tmp_image):
+    """test --fc with --overwrite-fc"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--fc", "Make", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "Make: Apple"
+
+    result = runner.invoke(
+        cli,
+        ["--fc", "ISO", "--overwrite-fc", "--verbose", str(tmp_image)],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    fc = md.findercomment
+    assert fc == "ISO: 20"
+
+    # reset findercomment for next test
+    md.findercomment = None

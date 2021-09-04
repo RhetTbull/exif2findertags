@@ -92,6 +92,10 @@ Settings:
                          $PATH if not specified).
   --dry-run              Dry run mode; do not actually modify any Finder
                          metadata.
+  --overwrite-tags       Overwrite existing Finder tags (default is to append
+                         to existing).
+  --overwrite-fc         Overwrite existing Finder comments (default is to
+                         append to existing).
 
 Other options:
   --version              Show the version and exit.
@@ -426,8 +430,8 @@ This is a new project under active development. Features in work:
 - [ ] Ability to use a config file to specify which tags to export
 - [ ] Ability to specify tag format to use when creating new Finder tags
 - [X] Tests
-- [ ] --overwrite-tags to overwrite existing Finder tags
-- [ ] --overwrite-fc to overwrite existing Finder comments 
+- [X] --overwrite-tags to overwrite existing Finder tags
+- [X] --overwrite-fc to overwrite existing Finder comments 
 - [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
 - [X] --dry-run
 

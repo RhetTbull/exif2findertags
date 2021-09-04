@@ -37,6 +37,8 @@ class ExifToFinder:
         dry_run=False,
         tag_format=None,
         fc_format=None,
+        overwrite_tags=False,
+        overwrite_fc=False,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -54,6 +56,8 @@ class ExifToFinder:
         dry_run: run in dry-run mode (don't write anything)
         tag_format: template string for writing Finder tags
         fc_format: template string for writing Finder comments
+        overwrite_tags: overwrite existing Finder tags
+        overwrite_fc: overwrite existing Finder comments
         """
 
         self.tags = tags
@@ -73,6 +77,8 @@ class ExifToFinder:
         self.dry_run = dry_run
         self.tag_format = tag_format
         self.fc_format = fc_format
+        self.overwrite_tags = overwrite_tags
+        self.overwrite_fc = overwrite_fc
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -181,7 +187,10 @@ class ExifToFinder:
         md = osxmetadata.OSXMetaData(filename)
         current_tags = list(md.tags)
         tags = [osxmetadata.Tag(tag) for tag in finder_tags]
-        new_tags = current_tags + [tag for tag in tags if tag not in current_tags]
+        if self.overwrite_tags:
+            new_tags = tags
+        else:
+            new_tags = current_tags + [tag for tag in tags if tag not in current_tags]
         if new_tags:
             md.tags = new_tags
 
@@ -191,7 +200,10 @@ class ExifToFinder:
             return
         md = osxmetadata.OSXMetaData(filename)
         fc = md.findercomment
-        md.findercomment = fc + "\n" + comment if fc else comment
+        if self.overwrite_fc:
+            md.findercomment = comment
+        else:
+            md.findercomment = fc + "\n" + comment if fc else comment
 
     def format_tag_value(self, filename, tag, exiftool):
         """Format a tag value with a template"""
