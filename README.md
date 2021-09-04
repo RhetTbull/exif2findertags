@@ -1,5 +1,5 @@
 # exif2findertags
-Read exif metadata from images with [exiftool](https://exiftool.org/) and write to MacOS Finder tags.  For example, you could use this with Final Cut Pro and its "Keywords from Finder Tags" import feature to allow Final Cut Pro to access EXIF metadata. This is similar to the commercial app evrX but in a free command line tool.
+Read exif metadata from images with [exiftool](https://exiftool.org/) and write to MacOS Finder tags and/or Finder comments.  For example, you could use this with Final Cut Pro and its "Keywords from Finder Tags" import feature to allow Final Cut Pro to access EXIF metadata. This is similar to the commercial app evrX but in a free command line tool.
 
 # Installation
 I recommend you install `exif2findertags` with [pipx](https://github.com/pipxproject/pipx). If you use `pipx`, you will not need to create a virtual environment as `pipx` takes care of this. The easiest way to do this on a Mac is to use [homebrew](https://brew.sh/):
