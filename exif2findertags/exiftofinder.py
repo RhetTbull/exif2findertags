@@ -16,6 +16,25 @@ def noop():
 DEFAULT_GROUP_TAG_TEMPLATE = "{GROUP}:{TAG}: {VALUE}"
 DEFAULT_TAG_TEMPLATE = "{TAG}: {VALUE}"
 
+# supported attributes for xattr_template
+EXTENDED_ATTRIBUTE_NAMES = [
+    "authors",
+    "comment",
+    "copyright",
+    "creator",
+    "description",
+    "findercomment",
+    "headline",
+    "keywords",
+    "participants",
+    "projects",
+    "rating",
+    "subject",
+    "title",
+    "version",
+]
+EXTENDED_ATTRIBUTE_NAMES_QUOTED = [f"'{x}'" for x in EXTENDED_ATTRIBUTE_NAMES]
+
 
 class ExifToFinder:
     """Read EXIF and other photo/video metadata with exiftool and write to Finder tags"""
@@ -41,6 +60,7 @@ class ExifToFinder:
         overwrite_fc=False,
         tag_template=None,
         fc_template=None,
+        xattr_template=None,
     ) -> None:
         """Args:
         tags: list of tags to read from EXIF
@@ -62,6 +82,7 @@ class ExifToFinder:
         overwrite_fc: overwrite existing Finder comments
         tag_template: list of template strings for writing Finder tags
         fc_template: list of template strings for writing Finder comments
+        xattr_template: list of template tuples (attribute, template) for writing extended attributes
         """
 
         self.tags = tags
@@ -85,6 +106,7 @@ class ExifToFinder:
         self.overwrite_fc = overwrite_fc
         self.tag_template = tag_template
         self.fc_template = fc_template
+        self.xattr_template = xattr_template
 
         if not callable(verbose):
             raise ValueError("verbose must be callable")
@@ -196,6 +218,10 @@ class ExifToFinder:
             self.write_finder_comment(filename, comment)
             file_count = 1
 
+        for xattr, template in self.xattr_template:
+            rendered = self.render_template(template, filename, exiftool)
+            self.write_extended_attributes(filename, xattr, rendered)
+
         return file_count
 
     def write_finder_tags(self, filename, finder_tags):
@@ -211,6 +237,29 @@ class ExifToFinder:
             new_tags = current_tags + [tag for tag in tags if tag not in current_tags]
         if new_tags:
             md.tags = new_tags
+
+    def write_extended_attributes(self, filename, attr, value):
+        """Write extended attributes to file"""
+        if self.dry_run:
+            return
+        md = osxmetadata.OSXMetaData(filename)
+        islist = osxmetadata.ATTRIBUTES[attr].list
+        if value:
+            value = ", ".join(value) if not islist else sorted(value)
+        file_value = md.get_attribute(attr)
+
+        if file_value and islist:
+            file_value = sorted(file_value)
+
+        if (not file_value and not value) or file_value == value:
+            # if both not set or both equal, nothing to do
+            # get_attribute returns None if not set and value will be [] if not set so can't directly compare
+            self.verbose(
+                f"Skipping extended attribute {attr} for {filename}: nothing to do"
+            )
+        else:
+            self.verbose(f"Writing extended attribute {attr} to {filename}")
+            md.set_attribute(attr, value)
 
     def write_finder_comment(self, filename, comment):
         """Write Finder comment to file"""

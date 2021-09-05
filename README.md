@@ -19,7 +19,7 @@ Once you've installed `exif2findertags` with pipx, to upgrade to the latest vers
 
 # Usage
 ```
-exif2findertags
+$ exif2findertags --help
 Usage: exif2findertags [OPTIONS] [FILES]...
 
   Create Finder tags and/or Finder comments from EXIF and other metadata in
@@ -74,8 +74,21 @@ Specify which metadata tags to export to Finder tags and/or comments:
                            "Camera: {Make|titlecase}{comma} {Model|titlecase}"'
                            would result in a Finder comment of 'Camera: Nikon
                            Corporation, Nikon D810' if 'EXIF:Make=NIKON
-                           CORPORATION' and 'EXIF:Model=NIKON D810'. See Template
-                           System for additional details.
+                           CORPORATION' and 'EXIF:Model=NIKON D810'. See
+                           Template System for additional details.
+  --xattr-template ATTRIBUTE TEMPLATE
+                           Set extended attribute ATTRIBUTE to TEMPLATE value.
+                           Valid attributes are: 'authors', 'comment',
+                           'copyright', 'creator', 'description',
+                           'findercomment', 'headline', 'keywords',
+                           'participants', 'projects', 'rating', 'subject',
+                           'title', 'version'. For example, to set Spotlight
+                           comment (distinct from Finder comment) to the
+                           photo's title and description: '--xattr-template
+                           comment "{Title}{newline}{ImageDescription}" '--
+                           xattr-template' will overwrite any existing value
+                           for the specified attribute. See Extended Attributes
+                           below for additional details on this option.
 
 Formatting options:
   --tag-format TEMPLATE    Template for specifying Finder tag format. '{GROUP}'
@@ -134,6 +147,65 @@ TagValue`. For example, `--tag ISO` would produce something like `ISO: 100`.
 
 exiftool must be installed as it is used to read the metadata from media files.
 See https://exiftool.org/ to download and install exiftool.
+
+
+** Extended Attributes **
+
+The '-xattr-template' option writes additional metadata to extended attributes
+in the file.  These option will only work if the destination filesystem
+supports extended attributes (most do).  Unlike EXIF metadata, extended
+attributes do not modify the actual file.
+
+Note: Most cloud storage services do not synch extended attributes. Dropbox
+does sync  them and any changes to a file's extended attributes will cause
+Dropbox to re-sync the files.
+
+The following attributes may be used with '--xattr-template':
+
+
+authors        The author, or authors, of the contents of the file.  A list of
+               strings. (com.apple.metadata:kMDItemAuthors)
+comment        A comment related to the file.  This differs from the Finder
+               comment, kMDItemFinderComment.  A string.
+               (com.apple.metadata:kMDItemComment)
+copyright      The copyright owner of the file contents.  A string.
+               (com.apple.metadata:kMDItemCopyright)
+creator        Application used to create the document content (for example
+               “Word”, “Pages”, and so on).  A string.
+               (com.apple.metadata:kMDItemCreator)
+description    A description of the content of the resource.  The description
+               may include an abstract, table of contents, reference to a
+               graphical representation of content or a free-text account of
+               the content.  A string. (com.apple.metadata:kMDItemDescription)
+findercomment  Finder comments for this file.  A string.
+               (com.apple.metadata:kMDItemFinderComment)
+headline       A publishable entry providing a synopsis of the contents of the
+               file.  A string. (com.apple.metadata:kMDItemHeadline)
+keywords       Keywords associated with this file. For example, “Birthday”,
+               “Important”, etc. This differs from Finder tags
+               (_kMDItemUserTags) which are keywords/tags shown in the Finder
+               and searchable in Spotlight using "tag:tag_name".  A list of
+               strings. (com.apple.metadata:kMDItemKeywords)
+participants   The list of people who are visible in an image or movie or
+               written about in a document. A list of strings.
+               (com.apple.metadata:kMDItemParticipants)
+projects       The list of projects that this file is part of. For example, if
+               you were working on a movie all of the files could be marked as
+               belonging to the project “My Movie”. A list of strings.
+               (com.apple.metadata:kMDItemProjects)
+rating         User rating of this item. For example, the stars rating of an
+               iTunes track. An integer. (com.apple.metadata:kMDItemStarRating)
+subject        Subject of the this item. A string.
+               (com.apple.metadata:kMDItemSubject)
+title          The title of the file. For example, this could be the title of a
+               document, the name of a song, or the subject of an email
+               message. A string. (com.apple.metadata:kMDItemTitle)
+version        The version number of this file. A string.
+               (com.apple.metadata:kMDItemVersion)
+
+For additional information on extended attributes see: https://developer.apple.
+com/documentation/coreservices/file_metadata/mditem/common_metadata_attribute_k
+eys
 
 
 ** Template System **
@@ -439,24 +511,6 @@ For example:
 `--tag-value` will produce a Finder tag named with just the value of the specified tag without the tag name.  For example:
 
 - `Jane Smith` instead of `PersonInImage: Jane Smith`
-
-# Roadmap
-
-This is a new project under active development. Features in work:
-
-- [x] --all-tags to output all tags without having to specify them
-- [X] --tag-group GROUP to output all tags in a certain group, e.g. --tag-group EXIF
-- [X] Ability to also set the Finder comment field based on tag values, (for example, image description)
-- [ ] Ability to use a config file to specify which tags to export
-- [X] Ability to specify tag format to use when creating new Finder tags
-- [X] Tests
-- [X] --overwrite-tags to overwrite existing Finder tags
-- [X] --overwrite-fc to overwrite existing Finder comments 
-- [X] Add template system for specifying tag and comment formats (port from [osxphotos](https://github.com/RhetTbull/osxphotos))
-- [X] --dry-run
-- [X] --tag-template for specifying custom tags
-- [X] --fc-template for specifying custom Finder comments
-- [ ] --xattr-template for adding arbitrary extended attributes in addition to tags and comments
 
 # Contributing
 

@@ -7,8 +7,10 @@ import io
 import pathlib
 import re
 import sys
+from functools import partial
 
 import click
+import osxmetadata
 from cloup import (
     Command,
     Context,
@@ -27,10 +29,15 @@ from rich.markdown import Markdown
 from yaspin import yaspin
 
 from ._version import __version__
-from .exiftofinder import DEFAULT_GROUP_TAG_TEMPLATE, DEFAULT_TAG_TEMPLATE, ExifToFinder
+from .exiftofinder import (
+    DEFAULT_GROUP_TAG_TEMPLATE,
+    DEFAULT_TAG_TEMPLATE,
+    EXTENDED_ATTRIBUTE_NAMES,
+    EXTENDED_ATTRIBUTE_NAMES_QUOTED,
+    ExifToFinder,
+)
 from .exiftool import get_exiftool_path
 from .phototemplate import TEMPLATE_SUBSTITUTIONS_ALL, get_template_help
-from functools import partial
 
 # if True, shows verbose output, controlled via --verbose flag
 VERBOSE = False
@@ -45,6 +52,21 @@ def verbose(message_str, **kwargs):
 def print_help_msg(command):
     with Context(command) as ctx:
         click.echo(command.get_help(ctx))
+
+
+class ExtendedAttribute(click.ParamType):
+
+    name = "ExtendedAttribute"
+
+    def convert(self, value, param, ctx):
+        if value in EXTENDED_ATTRIBUTE_NAMES:
+            return value
+        else:
+            self.fail(
+                f"Invalid extended attribute {value}. "
+                "Valid attributes are: "
+                f"{', '.join(EXTENDED_ATTRIBUTE_NAMES_QUOTED)}. "
+            )
 
 
 class EXIFToFinderCommand(Command):
@@ -75,7 +97,37 @@ class EXIFToFinderCommand(Command):
             "exiftool must be installed as it is used to read the metadata from media files. "
             + "See https://exiftool.org/ to download and install exiftool."
         )
+        formatter.write("\n\n")
+        formatter.write(
+            rich_text("[bold]** Extended Attributes **[/bold]", width=formatter.width)
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            """
+The '-xattr-template' option writes additional metadata to extended attributes in the file. 
+These option will only work if the destination filesystem supports extended attributes (most do). 
+Unlike EXIF metadata, extended attributes do not modify the actual file. 
 
+Note: Most cloud storage services do not synch extended attributes. Dropbox does sync 
+them and any changes to a file's extended attributes will cause Dropbox to re-sync the files.
+
+The following attributes may be used with '--xattr-template':
+
+            """
+        )
+        formatter.write_dl(
+            [
+                (
+                    attr,
+                    f"{osxmetadata.ATTRIBUTES[attr].help} ({osxmetadata.ATTRIBUTES[attr].constant})",
+                )
+                for attr in EXTENDED_ATTRIBUTE_NAMES
+            ]
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            "For additional information on extended attributes see: https://developer.apple.com/documentation/coreservices/file_metadata/mditem/common_metadata_attribute_keys"
+        )
         formatter.write("\n\n")
         formatter.write(
             rich_text("[bold]** Template System **[/bold]", width=formatter.width)
@@ -182,6 +234,19 @@ formatter_settings = HelpFormatter.settings(
         "would result in a Finder comment of 'Camera: Nikon Corporation, Nikon D810' if 'EXIF:Make=NIKON CORPORATION' and 'EXIF:Model=NIKON D810'. "
         "See Template System for additional details.",
     ),
+    option(
+        "--xattr-template",
+        nargs=2,
+        metavar="ATTRIBUTE TEMPLATE",
+        multiple=True,
+        type=(ExtendedAttribute(), str),
+        help="Set extended attribute ATTRIBUTE to TEMPLATE value. Valid attributes are: "
+        f"{', '.join(EXTENDED_ATTRIBUTE_NAMES_QUOTED)}. "
+        "For example, to set Spotlight comment (distinct from Finder comment) to the photo's title and description: "
+        '\'--xattr-template comment "{Title}{newline}{ImageDescription}" '
+        "'--xattr-template' will overwrite any existing value for the specified attribute. "
+        "See Extended Attributes below for additional details on this option.",
+    ),
     constraint=RequireAtLeast(1),
 )
 @option_group(
@@ -269,6 +334,7 @@ def cli(
     fc_format,
     overwrite_tags,
     overwrite_fc,
+    xattr_template,
 ):
     """Create Finder tags and/or Finder comments from EXIF and other metadata in media files."""
     global VERBOSE
@@ -316,6 +382,7 @@ def cli(
         overwrite_fc=overwrite_fc,
         tag_template=tag_template,
         fc_template=fc_template,
+        xattr_template=xattr_template,
     )
 
     if not VERBOSE:
@@ -350,6 +417,7 @@ def process_files(
     overwrite_fc,
     tag_template,
     fc_template,
+    xattr_template,
 ) -> int:
     """Process files with ExifToFinder"""
     e2f = ExifToFinder(
@@ -372,6 +440,7 @@ def process_files(
         overwrite_fc=overwrite_fc,
         tag_template=tag_template,
         fc_template=fc_template,
+        xattr_template=xattr_template,
     )
 
     files_processed = 0

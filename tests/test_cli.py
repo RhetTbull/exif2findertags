@@ -637,3 +637,45 @@ def test_fc_template_2(tmp_image):
 
     # reset comments for next test
     md.findercomment = None
+
+
+def test_xattr_template(tmp_image):
+    """test --xattr-template"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--xattr-template",
+            "comment",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image))
+    assert md.comment == "Camera: Apple, iPhone SE (2nd generation)"
+
+    # reset comments for next test
+    md.comment = None
+
+
+def test_xattr_template_invalid(tmp_image):
+    """test --xattr-template with invalid attribute"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--xattr-template",
+            "foo",
+            "Camera: {Make|titlecase}{comma} {Model}",
+            "--verbose",
+            str(tmp_image),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid extended attribute" in result.output
