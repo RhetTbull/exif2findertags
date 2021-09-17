@@ -400,6 +400,12 @@ Substitution         Description
                      Image Description'; for use with --tag-format.
 {strip}              Use in form '{strip,TEMPLATE}'; strips whitespace from
                      begining and end of rendered TEMPLATE value(s).
+{detected_text}      List of text strings found in the image after performing
+                     text detection. You may pass a confidence threshold value
+                     between 0.0 and 1.0 after a colon as in
+                     '{detected_text:0.5}'; The default confidence threshold is
+                     0.7. '{detected_text}' works only on macOS Catalina
+                     (10.15) or later.
 {filepath}           The full path to the file being processed.
 {created}            Photo's creation date if set in the EXIF data, otherwise
                      null; ISO 8601 format
@@ -425,7 +431,7 @@ Substitution         Description
                      of year: '2020-23'. If used with no template will return
                      null value. See https://strftime.org/ for help on strftime
                      templates.
-{mofified}           Photo's modification date if set in the EXIF data,
+{modified}           Photo's modification date if set in the EXIF data,
                      otherwise null; ISO 8601 format
 {modified.date}      Photo's modification date in ISO format, e.g.
                      '2020-03-22'; uses creation date if photo is not modified
