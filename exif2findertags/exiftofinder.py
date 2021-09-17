@@ -220,7 +220,11 @@ class ExifToFinder:
 
         for xattr, template in self.xattr_template:
             rendered = self.render_template(template, filename, exiftool)
-            self.write_extended_attributes(filename, xattr, rendered)
+            file_count = (
+                1
+                if self.write_extended_attributes(filename, xattr, rendered)
+                else file_count
+            )
 
         return file_count
 
@@ -251,15 +255,26 @@ class ExifToFinder:
         if file_value and islist:
             file_value = sorted(file_value)
 
+        file_updated = False
         if (not file_value and not value) or file_value == value:
             # if both not set or both equal, nothing to do
             # get_attribute returns None if not set and value will be [] if not set so can't directly compare
             self.verbose(
                 f"Skipping extended attribute {attr} for {filename}: nothing to do"
             )
-        else:
-            self.verbose(f"Writing extended attribute {attr} to {filename}")
+        elif value:
+            self.verbose(f"Writing extended attribute {attr}={value} to {filename}")
             md.set_attribute(attr, value)
+            file_updated = True
+        else:
+            self.verbose(
+                f"Existing extended attribute {attr}={file_value} but new value is null; clearing {attr} from {filename}"
+            )
+            # value not set but there was already a value so remove it
+            md.clear_attribute(attr)
+            file_updated = True
+
+        return file_updated
 
     def write_finder_comment(self, filename, comment):
         """Write Finder comment to file"""

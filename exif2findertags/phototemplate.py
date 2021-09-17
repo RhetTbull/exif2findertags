@@ -937,9 +937,6 @@ class PhotoTemplate:
             values = _get_detected_text(
                 self.photopath, orientation=orientation, confidence=subfield
             )
-
-        # elif field == "detected_text":
-        #     values = _get_detected_text(self.photo, self.exportdb, confidence=subfield)
         else:
             raise ValueError(f"Unhandled template value: {field}")
 
