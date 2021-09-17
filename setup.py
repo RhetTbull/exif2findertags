@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-import sys
 import os.path
+import sys
+
+from setuptools import find_packages, setup
 
 if sys.version_info < (3, 7, 0):
     sys.stderr.write("ERROR: You need Python 3.7 or later to use exif2findertags.\n")
@@ -47,13 +48,20 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=[
-        "osxmetadata>=0.99.33",
+        "wurlitzer>=2.1.0,<2.2.0",
         "click>=8.0",
-        "yaspin>=2.1.0",
         "cloup>=0.11.0",
-        "textx>=2.3.0",
+        "osxmetadata>=0.99.33",
         "pathvalidate>=2.4.1",
+        "pyobjc-core>=7.2,<8.0",
+        "pyobjc-framework-AVFoundation>=7.2,<8.0",
+        "pyobjc-framework-CoreServices>=7.2,<8.0",
+        "pyobjc-framework-Metal>=7.2,<8.0",
+        "pyobjc-framework-Quartz>=7.2,<8.0",
+        "pyobjc-framework-Vision>=7.2,<8.0",
         "rich>=10.9.0",
+        "textx>=2.3.0",
+        "yaspin>=2.1.0",
     ],
     python_requires=">=3.7",
     entry_points={"console_scripts": ["exif2findertags=exif2findertags.cli:cli"]},

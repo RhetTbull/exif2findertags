@@ -10,6 +10,7 @@ from click.testing import CliRunner
 import exif2findertags
 
 TEST_IMAGE = "tests/apples.jpeg"
+TEST_IMAGE_VISION = "tests/freewifi.jpeg"
 TEST_VIDEO = "tests/Jellyfish.mov"
 
 
@@ -32,6 +33,15 @@ def tmp_image(tmpdir_factory):
     return copyfile(
         TEST_IMAGE,
         tmpdir / pathlib.Path(TEST_IMAGE).name,
+    )
+
+
+@pytest.fixture(scope="session")
+def tmp_image_vision(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp("data")
+    return copyfile(
+        TEST_IMAGE_VISION,
+        tmpdir / pathlib.Path(TEST_IMAGE_VISION).name,
     )
 
 
@@ -679,3 +689,26 @@ def test_xattr_template_invalid(tmp_image):
     )
     assert result.exit_code != 0
     assert "Invalid extended attribute" in result.output
+
+
+def test_xattr_template_detected_text(tmp_image_vision):
+    """test --xattr-template with {detected_text} template"""
+    from exif2findertags.cli import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--xattr-template",
+            "comment",
+            "{detected_text:0.5}",
+            "--verbose",
+            str(tmp_image_vision),
+        ],
+    )
+    assert result.exit_code == 0
+    md = osxmetadata.OSXMetaData(str(tmp_image_vision))
+    assert "disputed" in md.comment
+
+    # reset comments for next test
+    md.comment = None

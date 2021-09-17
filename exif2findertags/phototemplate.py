@@ -11,7 +11,7 @@ import shlex
 
 # import sys
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from textx import TextXSyntaxError, metamodel_from_file
 
@@ -19,6 +19,7 @@ from ._version import __version__
 from .datetime_formatter import DateTimeFormatter
 from .exiftool import ExifTool, ExifToolCaching
 from .path_utils import sanitize_dirname, sanitize_filename, sanitize_pathpart
+from .text_detection import detect_text
 
 # from .text_detection import detect_text
 # from .utils import expand_and_validate_filepath, load_function
@@ -30,6 +31,8 @@ OTL_GRAMMAR_MODEL = str(pathlib.Path(__file__).parent / "phototemplate.tx")
 """TextX metamodel for osxphotos template language """
 
 NONE_STR_SENTINEL = "__XYZZY_PHOTO_TEMPLATE_NONE_XYZZY__"
+
+TEXT_DETECTION_CONFIDENCE_THRESHOLD = 0.7
 
 DATETIME_SUBFIELDS = [
     "date",
@@ -67,7 +70,7 @@ TEMPLATE_SUBSTITUTIONS = {
     + "{created.strftime,%Y-%U} would result in year-week number of year: '2020-23'. "
     + "If used with no template will return null value. "
     + "See https://strftime.org/ for help on strftime templates.",
-    "{mofified}": "Photo's modification date if set in the EXIF data, otherwise null; ISO 8601 format",
+    "{modified}": "Photo's modification date if set in the EXIF data, otherwise null; ISO 8601 format",
     "{modified.date}": "Photo's modification date in ISO format, e.g. '2020-03-22'; uses creation date if photo is not modified",
     "{modified.year}": "4-digit year of photo modification time; uses creation date if photo is not modified",
     "{modified.yy}": "2-digit year of photo modification time; uses creation date if photo is not modified",
@@ -136,6 +139,10 @@ TEMPLATE_SUBSTITUTIONS_MULTI_VALUED = {
     # + "Use in format: {function:file.py::function_name} where 'file.py' is the name of the python file and 'function_name' is the name of the function to call. "
     # + "The function will be passed the PhotoInfo object for the photo. "
     # + "See https://github.com/RhetTbull/osxphotos/blob/master/examples/template_function.py for an example of how to implement a template function.",
+    "{detected_text}": "List of text strings found in the image after performing text detection. "
+    + "You may pass a confidence threshold value between 0.0 and 1.0 after a colon as in '{detected_text:0.5}'; "
+    + f"The default confidence threshold is {TEXT_DETECTION_CONFIDENCE_THRESHOLD}. "
+    + "'{detected_text}' works only on macOS Catalina (10.15) or later.",
 }
 
 TEMPLATE_SUBSTITUTIONS_EXIFTOOL = {
@@ -924,6 +931,13 @@ class PhotoTemplate:
             values = [shlex.quote(v) for v in default if v]
         elif field == "strip":
             values = [v.strip() for v in default]
+        elif field == "detected_text":
+            exifdict = self.exiftool.asdict(tag_groups=False)
+            orientation = exifdict.get("Orientation", None)
+            values = _get_detected_text(
+                self.photopath, orientation=orientation, confidence=subfield
+            )
+
         # elif field == "detected_text":
         #     values = _get_detected_text(self.photo, self.exportdb, confidence=subfield)
         else:
@@ -1241,21 +1255,23 @@ def exiftool_date_to_datetime(date: str) -> datetime.datetime:
         )
 
 
-# def _get_detected_text(photo, exportdb, confidence=TEXT_DETECTION_CONFIDENCE_THRESHOLD):
-#     """Returns the detected text for a photo
-#     {detected_text} uses this instead of PhotoInfo.detected_text() to cache the text for all confidence values
-#     """
-#     if not photo.isphoto:
-#         return []
+def _get_detected_text(
+    photo_path: Union[str, pathlib.Path],
+    orientation: Optional[int] = None,
+    confidence: Optional[int] = TEXT_DETECTION_CONFIDENCE_THRESHOLD,
+) -> List:
+    """Returns the detected text for a photo"""
 
-#     confidence = (
-#         float(confidence)
-#         if confidence is not None
-#         else TEXT_DETECTION_CONFIDENCE_THRESHOLD
-#     )
+    photo_path = str(photo_path)
 
-#     # _detected_text caches the text detection results in an extended attribute
-#     # so the first time this gets called is slow but repeated accesses are fast
-#     detected_text = photo._detected_text()
-#     exportdb.set_detected_text_for_uuid(photo.uuid, json.dumps(detected_text))
-#     return [text for text, conf in detected_text if conf >= confidence]
+    confidence = (
+        float(confidence)
+        if confidence is not None
+        else TEXT_DETECTION_CONFIDENCE_THRESHOLD
+    )
+
+    return [
+        text
+        for text, conf in detect_text(photo_path, orientation)
+        if conf >= confidence
+    ]
