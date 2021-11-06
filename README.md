@@ -214,7 +214,7 @@ eys
 
 exif2findertags contains a rich templating system which allows fine-grained    
 control over the output format of metadata. The templating system converts one 
-or template statements, written in exif2findertags templating language, to one 
+or template statements, written in exif2findertags metadata templating language, to one 
 or more rendered values using metadata information from the photo being        
 processed.                                                                     
 
