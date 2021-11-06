@@ -1,4 +1,4 @@
-exif2findertags contains a rich templating system which allows fine-grained control over the output format of metadata. The templating system converts one or template statements, written in exif2findertags templating language, to one or more rendered values using metadata information from the photo being processed. 
+exif2findertags contains a rich templating system which allows fine-grained control over the output format of metadata. The templating system converts one or template statements, written in exif2findertags metadata templating language, to one or more rendered values using metadata information from the photo being processed. 
 
 In its simplest form, a template statement has the form: `"{template_field}"`, for example `"{Make}"` which would resolve to the camera make (`EXIF:Make`) of the photo, for example `"Apple"` for a photo taken on an iPhone   .
 
