@@ -5,3 +5,5 @@ __pycache__
 *.pyc
 .vscode/
 .python-version
+build/
+dist/
