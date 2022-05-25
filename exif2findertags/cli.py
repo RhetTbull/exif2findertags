@@ -292,7 +292,6 @@ formatter_settings = HelpFormatter.settings(
     option(
         "--exiftool-path",
         type=click.Path(exists=True),
-        default=get_exiftool_path(),
         help="Optional path to exiftool executable (will look in $PATH if not specified).",
     ),
     option(
@@ -344,6 +343,7 @@ def cli(
         print_help_msg(cli)
         sys.exit(1)
 
+    exiftool_path = exiftool_path or get_exiftool_path()
     verbose(f"exiftool path: {exiftool_path}")
 
     # create nice looking text for status
