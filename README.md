@@ -18,6 +18,9 @@ Once you've installed `exif2findertags` with pipx, to upgrade to the latest vers
 
 `exif2findertags` uses [exiftool](https://exiftool.org) to extract metadata from photos and videos so you'll need to install exiftool.  `exif2findertags` will look in the path for exiftool.  Alternatively, you can specify the path to exiftool using the `--exiftool-path` option.  Because it uses exiftool, `exif2findertags` can read any metadata which exiftool is able to read.
 
+# Installation as a Finder service using Automator
+
+To run exif2findertags as a macOS Finder service so you can right-click on a file and run exif2findertags, see instructions [here](https://github.com/RhetTbull/exif2findertags/issues/8).
 
 # Usage
 ```
