@@ -228,7 +228,8 @@ class ExifToFinder:
             return
         md = osxmetadata.OSXMetaData(filename)
         current_tags = list(md.tags)
-        tags = [osxmetadata.Tag(tag) for tag in finder_tags]
+        # TODO: handle tag colors if tag color already set in Finder
+        tags = [osxmetadata.Tag(tag, 0) for tag in finder_tags]
         if self.overwrite_tags:
             new_tags = tags
         else:
