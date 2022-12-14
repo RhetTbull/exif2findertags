@@ -24,6 +24,7 @@ from cloup import (
     version_option,
 )
 from cloup.constraints import RequireAtLeast, mutually_exclusive
+from osxmetadata import MDITEM_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_SHORT_NAMES
 from rich.console import Console
 from rich.markdown import Markdown
 from yaspin import yaspin
@@ -115,15 +116,30 @@ The following attributes may be used with '--xattr-template':
 
             """
         )
-        formatter.write_dl(
-            [
-                (
-                    attr,
-                    f"{osxmetadata.ATTRIBUTES[attr].help} ({osxmetadata.ATTRIBUTES[attr].constant})",
-                )
-                for attr in EXTENDED_ATTRIBUTE_NAMES
-            ]
-        )
+        # build help text from all the attribute names
+        # passed to click.HelpFormatter.write_dl for formatting
+        attr_tuples = [
+            (
+                rich_text("[bold]Attribute[/bold]", width=formatter.width),
+                rich_text("[bold]Description[/bold]", width=formatter.width),
+            )
+        ]
+        for attr_key in sorted(EXTENDED_ATTRIBUTE_NAMES):
+            # get short and long name
+            attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr_key]
+            short_name = MDITEM_ATTRIBUTE_DATA[attr]["short_name"]
+            long_name = MDITEM_ATTRIBUTE_DATA[attr]["name"]
+            constant = MDITEM_ATTRIBUTE_DATA[attr]["xattr_constant"]
+
+            # get help text
+            description = MDITEM_ATTRIBUTE_DATA[attr]["description"]
+            type_ = MDITEM_ATTRIBUTE_DATA[attr]["help_type"]
+            attr_help = f"{long_name}; {constant}; {description}; {type_}"
+
+            # add to list
+            attr_tuples.append((short_name, attr_help))
+
+        formatter.write_dl(attr_tuples)
         formatter.write("\n")
         formatter.write_text(
             "For additional information on extended attributes see: https://developer.apple.com/documentation/coreservices/file_metadata/mditem/common_metadata_attribute_keys"
