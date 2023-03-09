@@ -3,6 +3,7 @@
 import pathlib
 
 import osxmetadata
+from osxmetadata import MDITEM_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_SHORT_NAMES
 
 from .exiftool import ExifToolCaching, get_exiftool_path
 from .phototemplate import PhotoTemplate, RenderOptions
@@ -142,14 +143,12 @@ class ExifToFinder:
 
         finder_tags = []
         for tag in self.tags:
-            tag_name = exifdict_lc.get(tag.lower())
-            if tag_name:
+            if tag_name := exifdict_lc.get(tag.lower()):
                 rendered = self.format_tag_value(filename, tag_name, exiftool)
                 finder_tags.extend(rendered)
 
         for tag_value in self.tag_values:
-            tag_name = exifdict_lc.get(tag_value.lower())
-            if tag_name:
+            if tag_name := exifdict_lc.get(tag_value.lower()):
                 value = exifdict[tag_name]
                 finder_tags.extend(exif_values_to_list(value))
 
@@ -183,10 +182,8 @@ class ExifToFinder:
                 rendered = self.render_template(template, filename, exiftool)
                 finder_tags.extend(rendered)
 
-        # eliminate duplicates
-        finder_tags = list(set(finder_tags))
         file_count = 0
-        if finder_tags:
+        if finder_tags := list(set(finder_tags)):
             self.verbose(f"Writing Finder tags {finder_tags} to {filename}")
             self.write_finder_tags(filename, finder_tags)
             file_count = 1
@@ -195,15 +192,13 @@ class ExifToFinder:
 
         finder_comment = []
         for tag in self.fc_tags:
-            tag_name = exifdict_lc.get(tag.lower())
-            if tag_name:
+            if tag_name := exifdict_lc.get(tag.lower()):
                 value = exifdict[tag_name]
                 rendered = self.format_fc_value(filename, tag_name, exiftool)
                 finder_comment.extend(rendered)
 
         for tag_value in self.fc_tag_values:
-            tag_name = exifdict_lc.get(tag_value.lower())
-            if tag_name:
+            if tag_name := exifdict_lc.get(tag_value.lower()):
                 value = exifdict[tag_name]
                 finder_comment.extend(exif_values_to_list(value))
 
@@ -212,8 +207,7 @@ class ExifToFinder:
                 rendered = self.render_template(template, filename, exiftool)
                 finder_comment.extend(rendered)
 
-        comment = "\n".join(finder_comment)
-        if comment:
+        if comment := "\n".join(finder_comment):
             self.verbose(f"Writing Finder comment {comment} to {filename}")
             self.write_finder_comment(filename, comment)
             file_count = 1
@@ -234,7 +228,8 @@ class ExifToFinder:
             return
         md = osxmetadata.OSXMetaData(filename)
         current_tags = list(md.tags)
-        tags = [osxmetadata.Tag(tag) for tag in finder_tags]
+        # TODO: handle tag colors if tag color already set in Finder
+        tags = [osxmetadata.Tag(tag, 0) for tag in finder_tags]
         if self.overwrite_tags:
             new_tags = tags
         else:
@@ -247,10 +242,11 @@ class ExifToFinder:
         if self.dry_run:
             return
         md = osxmetadata.OSXMetaData(filename)
-        islist = osxmetadata.ATTRIBUTES[attr].list
+        attr_name = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
+        islist = MDITEM_ATTRIBUTE_DATA[attr_name]["python_type"].startswith("list")
         if value:
-            value = ", ".join(value) if not islist else sorted(value)
-        file_value = md.get_attribute(attr)
+            value = sorted(value) if islist else ", ".join(value)
+        file_value = md.get(attr_name)
 
         if file_value and islist:
             file_value = sorted(file_value)
@@ -260,18 +256,20 @@ class ExifToFinder:
             # if both not set or both equal, nothing to do
             # get_attribute returns None if not set and value will be [] if not set so can't directly compare
             self.verbose(
-                f"Skipping extended attribute {attr} for {filename}: nothing to do"
+                f"Skipping extended attribute {attr_name} for {filename}: nothing to do"
             )
         elif value:
-            self.verbose(f"Writing extended attribute {attr}={value} to {filename}")
-            md.set_attribute(attr, value)
+            self.verbose(
+                f"Writing extended attribute {attr_name}={value} to {filename}"
+            )
+            md.set(attr_name, value)
             file_updated = True
         else:
             self.verbose(
-                f"Existing extended attribute {attr}={file_value} but new value is null; clearing {attr} from {filename}"
+                f"Existing extended attribute {attr_name}={file_value} but new value is null; clearing {attr_name} from {filename}"
             )
             # value not set but there was already a value so remove it
-            md.clear_attribute(attr)
+            md.clear_attribute(attr_name)
             file_updated = True
 
         return file_updated
@@ -309,7 +307,9 @@ class ExifToFinder:
             rendered, _ = phototemplate.render(template, options)
             return rendered
         except ValueError as e:
-            raise ValueError(f"Invalid template syntax for template '{template}': {e}")
+            raise ValueError(
+                f"Invalid template syntax for template '{template}': {e}"
+            ) from e
 
     def render_template(self, template, filename, exiftool):
         """Render a template"""
@@ -319,7 +319,9 @@ class ExifToFinder:
             rendered, _ = phototemplate.render(template, options)
             return rendered
         except ValueError as e:
-            raise ValueError(f"Invalid template syntax for template '{template}': {e}")
+            raise ValueError(
+                f"Invalid template syntax for template '{template}': {e}"
+            ) from e
 
 
 def exif_values_to_list(value):

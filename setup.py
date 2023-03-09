@@ -5,8 +5,8 @@ import sys
 
 from setuptools import find_packages, setup
 
-if sys.version_info < (3, 7, 0):
-    sys.stderr.write("ERROR: You need Python 3.7 or later to use exif2findertags.\n")
+if sys.version_info < (3, 9, 0):
+    sys.stderr.write("ERROR: You need Python 3.9 or later to use exif2findertags.\n")
     exit(1)
 
 # we'll import stuff from the source tree, let's ensure is on the sys path
@@ -44,28 +44,28 @@ setup(
         "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=[
-        "wurlitzer>=2.1.0,<2.2.0",
-        "click>=8.0",
-        "cloup>=0.11.0",
-        "osxmetadata>=0.99.33",
-        "pathvalidate>=2.4.1",
-        "pyobjc-core>=7.2,<8.0",
-        "pyobjc-framework-AVFoundation>=7.2,<8.0",
-        "pyobjc-framework-CoreServices>=7.2,<8.0",
-        "pyobjc-framework-Metal>=7.2,<8.0",
-        "pyobjc-framework-Quartz>=7.2,<8.0",
-        "pyobjc-framework-Vision>=7.2,<8.0",
-        "rich>=10.9.0",
-        "textx>=2.3.0",
-        "yaspin>=2.1.0",
+        "wurlitzer>=3.0.3,<4.0",
+        "Click>=8.1.3,<9.0",
+        "cloup>=2.0.0,<3.0",
+        "osxmetadata>=1.2.2,<2.0",
+        "pathvalidate>=2.5.2,<3.0",
+        "pyobjc-core>=9.0,<10.0",
+        "pyobjc-framework-AVFoundation>=9.0,<10.0",
+        "pyobjc-framework-CoreServices>=9.0,<10.0",
+        "pyobjc-framework-Metal>=9.0,<10.0",
+        "pyobjc-framework-Quartz>=9.0,<10.0",
+        "pyobjc-framework-Vision>=9.0,<10.0",
+        "rich>=12.6.0,<13.0",
+        "textx>=3.0.0,<4.0",
+        "yaspin>=2.2.0,<3.0",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     entry_points={"console_scripts": ["exif2findertags=exif2findertags.cli:cli"]},
     include_package_data=True,
 )
